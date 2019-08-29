@@ -1,0 +1,17 @@
+mainmenu_option next_comment
+comment 'Proprietary Kernel Modules'
+
+bool 'Proprietary modules'      CONFIG_PROPRIETARY_MODULES
+if [ "$CONFIG_PROPRIETARY_MODULES" = "y" ]; then
+bool 'Cryptodev'                CONFIG_PROPRIETARY_MODULES_CRYPTODEV
+bool 'UFSD (Paragon)'           CONFIG_PROPRIETARY_MODULES_UFSD
+bool 'WiFi Forward Module' 	CONFIG_PROPRIETARY_MODULES_WIFI_FORWARD
+if [ "$CONFIG_PROPRIETARY_MODULES_WIFI_FORWARD" = "y" ]; then
+choice	'WiFi Forward Version'\
+	"WiFiForward	CONFIG_PROPRIETARY_MODULES_WIFI_FWD\
+	WiFi_Forward(v1)	CONFIG_PROPRIETARY_MODULES_WIFI_FWD_V1
+	"
+fi
+
+fi
+endmenu

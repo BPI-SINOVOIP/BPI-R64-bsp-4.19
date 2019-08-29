@@ -1,0 +1,96 @@
+source "drivers/misc/mediatek/Kconfig.default"
+
+menu "Storage"
+
+endmenu # Storage
+
+menu "Power, PMIC, Battery & Low Power"
+
+endmenu # Power
+
+menu "MultiMedia, Display, Camera"
+
+config MTK_DISP_PLATFORM
+	string "MTK display platform name"
+	help
+	  To separate display features and control
+	  for different platform. Config platform name
+	  for your selection. It's used for display
+	  driver only.
+
+source "drivers/misc/mediatek/mmp/Kconfig"
+source "drivers/misc/mediatek/lcm/Kconfig"
+source "drivers/misc/mediatek/sync/Kconfig"
+source "drivers/misc/mediatek/video/Kconfig"
+endmenu # MultiMedia
+
+menu "Sensors"
+
+endmenu # Sensors
+
+menu "Modem & Connectivity"
+source "drivers/misc/mediatek/btif/Kconfig"
+source "drivers/misc/mediatek/connectivity/Kconfig"
+endmenu # CONN
+
+menu "Security"
+
+endmenu # Security
+
+menu "Other Peripherals"
+
+endmenu # Other Peripheral
+
+menu "Memory"
+
+endmenu # Memory
+
+menu "TinySys"
+source "drivers/misc/mediatek/sspm/Kconfig"
+endmenu # TinySys
+
+menu "Debug, log, trace"
+
+config MTK_ATF_LOGGER
+	bool "atf logger kernel driver"
+	depends on HAVE_ARM_SMCCC && ARCH_MEDIATEK && OF
+	default n
+	help
+	  ARM Trusted Firmwear Logger which is designed by Mediatek.
+	  The logger provide a /proc interface for reading from
+	  user space.
+
+config MTK_ICE_DEBUG
+	bool "ICE_DEBUG"
+	default y if ARCH_MEDIATEK
+	help
+	  For Mediatek InCircuit Emulator Debug features.
+	  Select "y" if you want to use.
+	  Select "n" if you are not sure.
+
+config MTK_SPMTWAM
+	tristate "Mediatek Signal profiling tool"
+	depends on ARCH_MEDIATEK && OF
+	help
+	  For Mediatek low power signal profiling features.
+	  Profiling several hw signals for debug purposes.
+	  Select "y" if you want to use.
+	  Select "n" if you are not sure.
+
+config MTK_MET
+	bool "Mediatek Embedded Technology"
+	depends on FTRACE && TRACING
+	help
+	  For Mediatek Embedded Technology features.
+	  It depends on FTRACE and TRACING.
+	  Select "Y" if you want to use.
+	  Select "N" if you are not sure.
+
+source "drivers/misc/mediatek/met_drv/Kconfig"
+source "drivers/misc/mediatek/mtprof/Kconfig"
+endmenu # Debug
+
+menu "Misc"
+
+endmenu # Misc
+

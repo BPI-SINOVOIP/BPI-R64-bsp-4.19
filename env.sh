@@ -1,0 +1,12 @@
+export ARCH=arm
+export BOARD=BPI-R64-console
+export SOC=mt7622
+export MACH=mt7622_evb
+export CROSS_COMPILE=arm-linux-gnueabihf-
+export UBOOT_CONFIG=mt7622_evb_config
+export KERNEL_CONFIG=mt7622_evb_bpi_defconfig
+export LICHEE_PLATFORM="linux"
+export GPU_TYPE="mali450"
+export TOPDIR=/workspace/Banana-Devel/Banana-Pi-R64/BPI-R64-bsp-4.19/BPI-R64-bsp-4.19
+export TARGET_PLATFORM=mediatek
+export TARGET_PRODUCT=bpi-r64
