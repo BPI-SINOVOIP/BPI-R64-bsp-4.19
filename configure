@@ -12,6 +12,7 @@ TARGET_PRODUCT="bpi-r64"
 BPILINUX=linxu-mt
 BPIPACK=mt-pack
 BPISOC=mtk
+service=linux-4.19
 
 CUR_DIR=$PWD
 
@@ -42,6 +43,7 @@ generate_board_envsh() {
 	export BOARD=$BOARD
 	export SOC=$SOC
 	export MACH=$MACH
+	export service=$service
 	export CROSS_COMPILE=arm-linux-gnueabihf-
 	export UBOOT_CONFIG=${MACH}_config
 	export KERNEL_CONFIG=${MACH}_bpi_defconfig
