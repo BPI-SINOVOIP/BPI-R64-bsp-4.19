@@ -46,7 +46,6 @@ generate_board_envsh() {
 	export UBOOT_CONFIG=${MACH}_config
 	export KERNEL_CONFIG=${MACH}_bpi_defconfig
 	export LICHEE_PLATFORM="linux"
-	export GPU_TYPE="mali450"
 	export TOPDIR=${TOPDIR}
 	export TARGET_PLATFORM=${TARGET_PLATFORM}
 	export TARGET_PRODUCT=${TARGET_PRODUCT}
