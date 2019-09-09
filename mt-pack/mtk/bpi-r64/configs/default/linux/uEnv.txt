@@ -23,9 +23,9 @@ dtaddr=0x47000000
 ##
 #
 #root=/dev/ram
-root=/dev/mmcblk1p2 rootfstype=ext4 rootwait
+root=/dev/mmcblk0p2 rootfstype=ext4 rw rootwait
 console=ttyS0,115200n1 earlyprintk
-bootopts=debug=7 initcall_debug=0 androidboot.hardware=mt7622 swiotlb=512
+bootopts=debug=7 initcall_debug=0 androidboot.hardware=mt7622 swiotlb=512 cgroup_enable=memory cgroup_memory=1
 #
 ##
 #

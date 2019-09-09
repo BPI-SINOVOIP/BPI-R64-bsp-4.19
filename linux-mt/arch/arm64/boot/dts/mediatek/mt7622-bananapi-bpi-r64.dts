@@ -118,6 +118,15 @@
 };
 
 &pio {
+	/* 
+	 * TPM 2.0 ST33 RESET pin
+	 */
+	tpm_reset {
+		gpio-hog;
+		gpios = <62 GPIO_ACTIVE_HIGH>;
+		output-high;
+	};
+
 	/* Attention: GPIO 90 is used to switch between PCIe@1,0 and
 	 * SATA functions. i.e. output-high: PCIe, output-low: SATA
 	 */
@@ -455,6 +464,13 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c1_pins>;
 	status = "okay";
+	/* clock-frequency = <100000>; */
+	clock-frequency = <400000>;
+	st33htpi: st33htpi@0{
+		compatible = "st,st33htpm-i2c";
+		reg = <0x2e>;
+		status="okay";
+	};
 };
 
 &i2c2 {
@@ -543,6 +559,25 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&spic1_pins>;
 	status = "okay";
+/*
+        slb9670@0 {
+		compatible = "infineon,slb9670";
+		reg = <0>;
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+                spi-max-frequency = <500000>;
+		status = "okay";
+        };
+*/
+
+	st33htpm0: st33htpm@0{
+		compatible = "st,st33htpm-spi";
+		reg = <0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		spi-max-frequency = <10000000>;
+		status = "okay";
+	};
 };
 
 &ssusb {
