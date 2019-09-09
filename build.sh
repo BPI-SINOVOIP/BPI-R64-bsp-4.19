@@ -12,6 +12,7 @@ MODE=$1
 BPILINUX=linux-mt
 BPIPACK=mt-pack
 BPISOC=mtk
+service=linux-4.19
 RET=0
 
 cp_download_files()
@@ -40,10 +41,10 @@ R="${SD}/BPI-ROOT"
 	## copy files to BPI-BOOT
 	#
 	mkdir -p $B/bananapi/${board}
-	cp -a $T/${BPIPACK}/${BPISOC}/${TARGET_PRODUCT}/configs/default/linux $B/bananapi/${board}/
-	cp -a $T/${BPILINUX}/arch/arm64/boot/uImage $B/bananapi/${board}/linux/uImage
-#	cp -a $T/${BPILINUX}/arch/arm64/boot/*Image $B/bananapi/${board}/linux
-	cp -a $T/${BPILINUX}/arch/arm64/boot/dts/mediatek/*.dtb $B/bananapi/${board}/linux/dtb
+	cp -a $T/${BPIPACK}/${BPISOC}/${TARGET_PRODUCT}/configs/default/$service $B/bananapi/${board}/
+	cp -a $T/${BPILINUX}/arch/arm64/boot/uImage $B/bananapi/${board}/$service/uImage
+#	cp -a $T/${BPILINUX}/arch/arm64/boot/*Image $B/bananapi/${board}/$service
+	cp -a $T/${BPILINUX}/arch/arm64/boot/dts/mediatek/*.dtb $B/bananapi/${board}/$service/dtb
 
 	#
 	## copy files to BPI-ROOT
@@ -56,12 +57,12 @@ R="${SD}/BPI-ROOT"
 	#
 	## create files for bpi-tools & bpi-migrate
 	#
-	(cd $B ; tar czvf $SD/BPI-BOOT-${board}.tgz .)
+	(cd $B ; tar czvf $SD/BPI-BOOT-${board}-4.19.tgz .)
 	(cd $R ; tar czvf $SD/${kernel}-net.tgz lib/modules/${kernel}/kernel/net)
 	(cd $R ; mv lib/modules/${kernel}/kernel/net $R/net)
 	(cd $R ; tar czvf $SD/${kernel}.tgz lib/modules)
 	(cd $R ; mv $R/net lib/modules/${kernel}/kernel/net)
-	(cd $R ; tar czvf $SD/BOOTLOADER-${board}.tgz usr/lib/u-boot/bananapi)
+	(cd $R ; tar czvf $SD/BOOTLOADER-${board}-4.19.tgz usr/lib/u-boot/bananapi)
 
 	return #SKIP
 }

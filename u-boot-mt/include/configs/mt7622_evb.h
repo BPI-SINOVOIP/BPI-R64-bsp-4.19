@@ -644,7 +644,7 @@
     "bpi=bananapi\0" \
     "board=bpi-r64\0" \
     "chip=MT7622\0" \
-    "service=linux\0" \
+    "service=linux-4.19\0" \
     "scriptaddr=0x43000000\0" \
     "device=mmc\0" \
     "partition=1:1\0" \

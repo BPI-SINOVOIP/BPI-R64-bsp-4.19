@@ -4,7 +4,7 @@
 bpi=bananapi
 board=bpi-r64
 chip=mt7622
-service=linux
+service=linux-4.19
 #
 ##
 #
