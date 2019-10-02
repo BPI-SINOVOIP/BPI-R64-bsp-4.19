@@ -97,7 +97,6 @@ libs-$(CONFIG_SPL_GPIO_SUPPORT) += drivers/gpio/
 libs-$(CONFIG_SPL_MMC_SUPPORT) += drivers/mmc/
 libs-$(CONFIG_SPL_MPC8XXX_INIT_DDR_SUPPORT) += drivers/ddr/fsl/
 libs-$(CONFIG_SPL_SERIAL_SUPPORT) += drivers/serial/
-libs-$(CONFIG_SPL_NOR_SUPPORT) += drivers/flash/
 libs-$(CONFIG_SPL_SPI_FLASH_SUPPORT) += drivers/mtd/spi/
 libs-$(CONFIG_SPL_SPI_SUPPORT) += drivers/spi/
 libs-y += fs/

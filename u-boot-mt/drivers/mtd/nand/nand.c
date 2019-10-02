@@ -31,13 +31,17 @@
 
 #if defined (CONFIG_MTK_MTD_NAND)
 #include <linux/mtd/partitions.h>
+#if defined (MT7622) || defined (MT7623)
 #include <asm/arch/nand/partition_define.h>
 #include <asm/arch/nand/bmt.h>
+extern bmt_struct *g_bmt;
 extern struct mtd_partition g_exist_Partition[PART_MAX_COUNT];
 extern void part_init_pmt(struct mtd_info *mtd, u8 * buf);
 extern int part_num;
+#else
+extern int init_bmt(struct nand_chip * chip,  int size);
+#endif
 extern u32 g_bmt_sz;
-extern bmt_struct *g_bmt;
 #endif /* CONFIG_MTK_MTD_NAND */
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -189,14 +193,21 @@ static void nand_init_chip(int i)
 
 #if defined (CONFIG_MTK_MTD_NAND)
 	memcpy(nand->priv, mtd, sizeof(struct mtd_info));
-#if !defined(CONFIG_MTK_SLC_NAND_SUPPORT)
+
+#if defined (CONFIG_MTK_SPI_NAND_SUPPORT)
+    if (init_bmt(nand, g_bmt_sz) != 0)
+        {
+        printf("[%s]Error: init bmt failed\n", __func__);
+        }
+#elif !defined(CONFIG_MTK_SLC_NAND_SUPPORT)
 	if (!(g_bmt = init_bmt(nand, g_bmt_sz)))
         {
 		printf("[%s]Error: init bmt failed\n", __func__);
         }
-#endif
+
 	part_init_pmt(mtd, (u8 *) & g_exist_Partition[0]);
 	add_mtd_partitions(mtd, g_exist_Partition, part_num);
+#endif
 
 #if UBOOT_NAND_UNIT_TEST
 	err = mtk_nand_unit_test_(nand, mtd);

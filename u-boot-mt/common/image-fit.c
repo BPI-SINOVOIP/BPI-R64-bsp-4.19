@@ -10,6 +10,7 @@
  */
 
 #ifdef USE_HOSTCC
+#include <configs/autoconf.h>
 #include "mkimage.h"
 #include <image.h>
 #include <time.h>
@@ -24,8 +25,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #include <sha1.h>
 #include <u-boot/crc.h>
 #include <u-boot/md5.h>
+#if (!defined (LEOPARD_ASIC_BOARD))&&(!defined (LEOPARD_FPGA_BOARD))
 #include <asm/arch/mt_typedefs.h>
-
+#endif
 
 
 #define RGU_BASE          			(0x10212000)

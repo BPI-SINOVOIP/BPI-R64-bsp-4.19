@@ -2,10 +2,15 @@
 #include <config.h>
 #include <command.h>
 #include <image.h>
-
+#include <asm/io.h>
+#if (defined (LEOPARD_ASIC_BOARD)) || (defined (LEOPARD_FPGA_BOARD))
+#include <asm/arch/gpio.h>
+#endif
 #if defined(ON_BOARD_NAND_FLASH_COMPONENT)
 #include <asm/arch/nand/partition_define.h>
 #endif
+
+#ifndef CONFIG_SPL_BUILD
 
 #define PART_MAGIC          0x58881688
 #define PART_FDT_MAGIC      0xD00DFEED
@@ -66,7 +71,7 @@ int do_read_image_blks (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 	    {
 		    img_size = (unsigned long) fdt_totalsize(img_addr);
 	    }
-		printf("[%s]This is a FIT image,img_size = 0x%lx\n", __func__, img_size);
+		printf("[%s] This is a FIT image,img_size = 0x%lx\n", __func__, img_size);
    }
    else if(IH_MAGIC != uimage_to_cpu(img_hdr->ih_magic))
 	{
@@ -74,7 +79,7 @@ int do_read_image_blks (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 	 	if (*((unsigned long*)load_addr) != PART_MAGIC)
 #endif
 		{
-            printf("[%s]Image format error,neither FIT image nor old image.\n",__func__);
+            printf("[%s] Image format error,neither FIT image nor old image.\n",__func__);
 			printf("Bad Magic Number.\n");
 			sprintf((char*) s,"%lX", (unsigned long)0);
 			setenv("img_blks", (const char *)s);
@@ -113,14 +118,14 @@ int do_read_image_blks (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 #if defined (CONFIG_MTK_MTD_NAND) || defined(ON_BOARD_SPI_NOR_FLASH_COMPONENT)
 	sprintf((char*) s,"%lX", img_blks*blk_size);
 	setenv("img_align_size", (const char *)s);
-	printf("[%s]img_blks = 0x%lx\n", __func__, img_blks);
-	printf("[%s]img_align_size = 0x%lx\n", __func__, img_blks*blk_size);
+	printf("[%s] img_blks = 0x%lx\n", __func__, img_blks);
+	printf("[%s] img_align_size = 0x%lx\n", __func__, img_blks*blk_size);
 #endif
 
     return 0;
 
 usage:
-	return CMD_RET_USAGE;    
+	return CMD_RET_USAGE;
 }
 
 int do_read_mtk_image_blks (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -177,7 +182,7 @@ int do_read_mtk_image_blks (cmd_tbl_t *cmdtp, int flag, int argc, char * const a
 #if defined (CONFIG_MTK_MTD_NAND) || defined(ON_BOARD_SPI_NOR_FLASH_COMPONENT)
 	sprintf((char*) s,"%lX", img_blks*blk_size);
 	setenv("img_align_size", (const char *)s);
-    	printf("[%s]img_align_size = %lX\n", __func__, img_blks*blk_size);
+	printf("[%s] img_align_size = %lX\n", __func__, img_blks*blk_size);
     img_size = (unsigned long) img_addr->info.dsize;
 #endif
 
@@ -290,7 +295,8 @@ int do_uboot_check (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 int do_filesize_check (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-    unsigned long partition_size,filesize;    
+    unsigned long partition_size, filesize;
+    unsigned long file_align_size;
     char s[32];
 	char *endp;
     
@@ -303,7 +309,7 @@ int do_filesize_check (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 
 	
 	filesize = getenv_hex("filesize",0);
-	printf("[do_filesize_check ]partition_size: 0x%lx ,, filesize: 0x%lx\n",partition_size,filesize);
+	printf("[%s] partition_size: 0x%lx , filesize: 0x%lx\n", __func__, partition_size, filesize);
 	if (filesize == 0)
 	{
 		printf("filesize == 0 ! please check the image is ok or not !!!.\n"); 
@@ -323,7 +329,13 @@ int do_filesize_check (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 
     sprintf((char*) s, "%s", "good");        
     setenv("filesize_result", (const char *)s);
-
+    uninitialized_var(file_align_size);
+#if defined(ON_BOARD_SPI_NOR_FLASH_COMPONENT)
+    file_align_size = ROUND(filesize, 0x1000); /* align 4K size */
+    sprintf((char*) s,"%lx", file_align_size);
+    setenv("file_align_size", (const char *)s);
+    printf("[%s] file_align_size = 0x%lx\n", __func__, file_align_size);
+#endif
     return 0;
 	
 usage:
@@ -366,7 +378,7 @@ int do_download_setting (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 {
 	int modifies = 0;
 	char *s;
-	char filetype[16],filename[64],defaultfilename[64],srvip[32],defaultsrvip[32],devip[32],defaultdevip[32];
+	char filetype[16],filename[128],defaultfilename[128],srvip[32],defaultsrvip[32],devip[32],defaultdevip[32];
 
 
 	if (argc != 2)
@@ -375,8 +387,8 @@ int do_download_setting (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
 	printf(" Please Input new setting /or enter to choose the default setting\n");
 
 	memset(filetype, 0, 16);
-	memset(filename, 0, 64);
-	memset(defaultfilename, 0, 64);
+	memset(filename, 0, 128);
+	memset(defaultfilename, 0, 128);
 	memset(srvip, 0, 32);
 	memset(defaultsrvip, 0, 32);
 	memset(devip, 0, 32);
@@ -428,18 +440,6 @@ int do_download_setting (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv
         printf("(%s) ", filename);
         input_value(filename);
         setenv("preloader_filename", filename);
-		if (strcmp(defaultfilename, filename) != 0)
-			modifies++;
-	}
-	else if (strcmp(filetype, "uboot_spl") == 0)
-	{
-		printf("\tInput uboot_spl file name ");
-        s = getenv("uboot_spl_filename");
-		memcpy(filename, s, strlen(s));
-		memcpy(defaultfilename, s, strlen(s));
-        printf("(%s) ", filename);
-        input_value(filename);
-        setenv("uboot_spl_filename", filename);
 		if (strcmp(defaultfilename, filename) != 0)
 			modifies++;
 	}
@@ -529,10 +529,132 @@ usage:
 	return CMD_RET_USAGE;
 }
 
+#if (defined (LEOPARD_ASIC_BOARD)) || (defined (LEOPARD_FPGA_BOARD))
+int do_custom_image_check(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+    u32 *img_hdr = (u32 *)CONFIG_SYS_SDRAM_BASE;
+    u32 first_val, img_hdr_magic;
+    char s[32];
 
-#if (defined (MT7622_FPGA_BOARD)) || (defined (MT7622_ASIC_BOARD)) || (defined (MT7626_FPGA_BOARD)) || (defined (MT7626_ASIC_BOARD))
+#if defined (CONFIG_CMD_NAND)
+    img_hdr_magic = 0x424F4F54;
+#elif defined (CONFIG_CMD_NOR)
+    img_hdr_magic = 0x53465F42;
+#else
+    img_hdr_magic = 0x12345678;
+#endif
+    first_val = uimage_to_cpu((u32)(*img_hdr));
+    if (first_val != img_hdr_magic) {
+        printf("Image_Check Bad Magic Number - 0x%x\n", first_val);
+        sprintf((char*) s, "%s", "bad");
+        setenv("img_result", (const char *)s);
+        return 0;
+    }
+
+    sprintf((char*) s, "%s", "good");
+    setenv("img_result", (const char *)s);
+    printf("[%s] start to upgrade with ICE load...\n", __func__);
+    return 0;
+}
+
+int do_utif_setting(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+#if 1  /* This settings must be checked by DE */
+	mt_set_gpio_mode(GPIO11, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO18, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO21, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO22, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO23, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO24, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO33, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO34, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO35, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO36, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO37, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO38, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO39, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO40, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO41, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO42, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO43, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO44, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO45, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO46, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO47, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO48, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO49, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO50, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO53, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO54, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO55, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO56, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO57, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO58, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO59, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO60, GPIO_MODE_07);
+	mt_set_gpio_mode(GPIO61, GPIO_MODE_07);
+#endif
+	printf("Set UTIF_debug mode successfully!\n");
+	return 0;
+}
+
+int do_switch_for_N9_jtag(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	int port;
+	char *endp;
+
+	if(argc > 2) {
+		printf("Invalid input parameter!\n");
+		return 1;
+	}
+
+	port = simple_strtoul(argv[1], &endp, 10);
+	if(port > 2) {
+		printf("Invalid Error Port %d!\n", port);
+		return 1;
+	}
+	if(port == 2) {
+		mt_set_gpio_mode(GPIO53, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO54, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO55, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO56, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO57, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO58, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO59, GPIO_MODE_06);
+		printf("Switch GPIO53~GPIO59 to AUX6 for N9 JTAG successfully!\n");
+	} else {
+		mt_set_gpio_mode(GPIO11, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO12, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO13, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO14, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO15, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO16, GPIO_MODE_06);
+		mt_set_gpio_mode(GPIO17, GPIO_MODE_06);
+		printf("Switch GPIO11~GPIO17 to AUX6 for CA7/N9 JTAG successfully!\n");
+	}
+
+	return 0;
+}
+
+int do_switch_for_N9_uart(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	mt_set_gpio_mode(GPIO60, GPIO_MODE_06);
+	mt_set_gpio_mode(GPIO61, GPIO_MODE_06);
+
+	printf("Switch GPIO60~GPIO61 to AUX6 for N9 UART successfully!\n");
+	return 0;
+}
+
+int do_gpio_dump(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	mt_get_gpio_status_dump();
+	return 0;
+}
+#endif
+
+#if (defined (MT7622_FPGA_BOARD)) || (defined (MT7622_ASIC_BOARD))
 int do_ctp_check (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{   
+{
     char *s;
     int i = 0;
 	s = (char*)ctp_load_addr;
@@ -550,10 +672,10 @@ int do_ctp_check (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 }
 
 int do_boot_to_ctp (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{   
+{
     void (*func)(void);
 	int i;
-	char *t; 
+	char *t;
 	t = (char*)ctp_load_addr;
     for(i=0; i<=31; i++)
     {
@@ -575,7 +697,7 @@ U_BOOT_CMD(
 	"[blk_size]\n"
 	"   - specify block size in decimal byte.\n"
 	"[img_size]\n"
-	"   - specify image size in hex byte."	
+	"   - specify image size in hex byte."
 );
 
 U_BOOT_CMD(
@@ -632,10 +754,36 @@ U_BOOT_CMD(
 	""
 );
 
+#if (defined (LEOPARD_ASIC_BOARD)) || (defined (LEOPARD_FPGA_BOARD))
+U_BOOT_CMD(
+	custom_image_check, 2,	1, do_custom_image_check,
+	"check if image in load_addr is normal.",
+	""
+);
 
+U_BOOT_CMD(
+	utif_debug, 2,	1, do_utif_setting,
+	"enable utif debug function.",
+	""
+);
+U_BOOT_CMD(
+	n9_jtag, 2,	1, do_switch_for_N9_jtag,
+	"switch GPIO to AUX6 for N9 jtag debug.",
+	""
+);
+U_BOOT_CMD(
+	n9_uart, 2,	1, do_switch_for_N9_uart,
+	"switch GPIO to AUX6 for N9 UART output.",
+	""
+);
+U_BOOT_CMD(
+	gpio_dump, 2,	1, do_gpio_dump,
+	"enable utif debug function.",
+	""
+);
+#endif
 
-
-#if (defined (MT7622_FPGA_BOARD)) || (defined (MT7622_ASIC_BOARD)) || (defined (MT7626_FPGA_BOARD)) || (defined (MT7626_ASIC_BOARD))
+#if (defined (MT7622_FPGA_BOARD)) || (defined (MT7622_ASIC_BOARD))
 U_BOOT_CMD(
 	ctp_check, 2,	1, do_ctp_check,
 	"check if ctp in load_addr is normal.",
@@ -644,8 +792,10 @@ U_BOOT_CMD(
 
 U_BOOT_CMD(
 	boot_to_ctp,	CONFIG_SYS_MAXARGS,	1,	do_boot_to_ctp,
-	"boot to ctp", 
+	"boot to ctp",
 	""
 );
 #endif
+
+#endif /* !defined(CONFIG_SPL_BUILD) */
 

@@ -1,17 +1,3 @@
-/******************************************************************************
-* mtk_snand.c - MTK NAND Flash Device Driver
- *
-* Copyright 2009-2012 MediaTek Co., Ltd.
- *
-* DESCRIPTION:
-* 	This file provid the other drivers nand relative functions
- *
-* modification history
-* ----------------------------------------
-* v3.0, 11 Feb 2010, mtk
-* ----------------------------------------
-******************************************************************************/
-
 #include <common.h>
 #include <linux/string.h>
 #include <config.h>
@@ -159,6 +145,7 @@ u32 g_bmt_sz = BMT_POOL_SIZE;
 /* NOTE(Bayi) */
 #define GPIO_BASE    0x10211000
 #define GPIO_MODE(x) (GPIO_BASE + 0x300 + 0x10 * x)
+#define GPIO_DRIV(x) (GPIO_BASE + 0x900 + 0x10 * x)
 u32 SNFI_GPIO_BACKUP[3];
 /* delay latency */
 #define SPI_NAND_RESET_LATENCY_US               (3 * 10)    // 0.3 us * 100
@@ -410,7 +397,7 @@ bool mtk_snand_get_device_info(u8 *id, snand_flashdev_info *devinfo)
 	int target=-1;
 	u8 target_id_len = 0;
 
-	for (i = 0; i < SNAND_CHIP_CNT; i++) {
+	for (i = 0; i < ARRAY_SIZE(gen_snand_FlashTable); i++) {
 		mismatch = 0;
 
 		for (m = 0; m < gen_snand_FlashTable[i].id_length; m++) {
@@ -438,13 +425,6 @@ bool mtk_snand_get_device_info(u8 *id, snand_flashdev_info *devinfo)
 		devinfo->id_length = gen_snand_FlashTable[target].id_length;
 		devinfo->blocksize = gen_snand_FlashTable[target].blocksize;    /* KB */
 		devinfo->advancedmode = gen_snand_FlashTable[target].advancedmode;
-
-		/* SW workaround for SNAND_ADV_READ_SPLIT */
-		/* Bayi add this workaround way for all spi nand */
-		if (0xC8 == devinfo->id[0] && 0xF4 == devinfo->id[1]) {
-			devinfo->advancedmode |= (SNAND_ADV_READ_SPLIT | SNAND_ADV_VENDOR_RESERVED_BLOCKS);
-		}
-
 		devinfo->pagesize = gen_snand_FlashTable[target].pagesize;
 		devinfo->sparesize = gen_snand_FlashTable[target].sparesize;
 		devinfo->totalsize = gen_snand_FlashTable[target].totalsize;
@@ -456,7 +436,8 @@ bool mtk_snand_get_device_info(u8 *id, snand_flashdev_info *devinfo)
 		devinfo->SNF_DLY_CTL3 = gen_snand_FlashTable[target].SNF_DLY_CTL3;
 		devinfo->SNF_DLY_CTL4 = gen_snand_FlashTable[target].SNF_DLY_CTL4;
 		devinfo->SNF_MISC_CTL = gen_snand_FlashTable[target].SNF_MISC_CTL;
-		devinfo->SNF_DRIVING = gen_snand_FlashTable[target].SNF_DRIVING;
+		devinfo->SNF_DRIVING_E4 = gen_snand_FlashTable[target].SNF_DRIVING_E4;
+		devinfo->SNF_DRIVING_E8 = gen_snand_FlashTable[target].SNF_DRIVING_E8;
 
 		/* init read split boundary */
 		/* g_snand_rs_num_page = SNAND_RS_BOUNDARY_BLOCK * ((devinfo->blocksize << 10) / devinfo->pagesize); */
@@ -698,6 +679,39 @@ static void mtk_snand_dev_enable_spiq(bool enable)
 	DRV_WriteReg32(RW_SNAND_MAC_INL, 0);
 
 	mtk_snand_dev_mac_op(SPI);
+}
+
+static void mtk_snand_dev_die_select_op(u8 die_id)
+{
+	u32  cmd;
+
+	cmd = SNAND_CMD_DIE_SELECT | (die_id << 8);
+	DRV_WriteReg32(RW_SNAND_GPRAM_DATA, cmd);
+	DRV_WriteReg32(RW_SNAND_MAC_OUTL, 2);
+	DRV_WriteReg32(RW_SNAND_MAC_INL , 0);
+
+	mtk_snand_dev_mac_op(SPI);
+}
+
+static u32 mtk_snand_dev_die_select(struct mtd_info *mtd, u32 page)
+{
+	struct nand_chip *chip = (struct nand_chip *)mtd->priv;
+	u32 total_blocks = (((u64)devinfo.totalsize) << 20) / (1 << chip->phys_erase_shift);
+	u16 page_per_block = 1 << (chip->phys_erase_shift - chip->page_shift);
+	u16 page_in_block = page % page_per_block;
+	u32 block = page / page_per_block;
+
+	/* Die Select operation */
+	if (devinfo.advancedmode & SNAND_ADV_TWO_DIE) {
+		if (block >= (total_blocks / 2)) {
+			mtk_snand_dev_die_select_op(1);
+			block -= total_blocks / 2;
+		} else {
+			mtk_snand_dev_die_select_op(0);
+		}
+	}
+
+	return (block * page_per_block + page_in_block);
 }
 
 /* Read Split related APIs */
@@ -993,11 +1007,11 @@ static bool return_fake_buf(u8 *data_buf, u32 page_size, u32 sec_num, u32 u4Page
 			t = ((t & 0xf0f0) >> 4) + (t & 0x0f0f);
 			sec_zero_count += t;
 			if (t > 0) {
-				printf("NFI, there is %d bit filp at sector(%d): %d in empty page \n ", t, j, i);
+				/*printf("NFI, there is %d bit filp at sector(%d): %d in empty page \n ", t, j, i); */
 			}
 		}
 		if (sec_zero_count > 2) {
-			printf("NFI, too many bit filp=%d @ page addr = 0x%x, we can not return fake buf\n", sec_zero_count, u4PageAddr);
+			/* printf("NFI, too many bit filp=%d @ page addr = 0x%x, we can not return fake buf\n", sec_zero_count, u4PageAddr); */
 			ret = false;
 		}
 	}
@@ -1066,7 +1080,7 @@ static bool mtk_snand_check_bch_error(struct mtd_info *mtd, u8 *pDataBuf, u8 *sp
 			} else {
 				if (u4ErrNum) {
 					correct_count += u4ErrNum;
-					printf("[%s] ECC-C, #err:%d, PA=%d, S=%d\n", __func__, u4ErrNum, u4PageAddr, i);
+					/* printf("[%s] ECC-C, #err:%d, PA=%d, S=%d\n", __func__, u4ErrNum, u4PageAddr, i); */
 				}
 			}
 		}
@@ -1080,11 +1094,8 @@ static bool mtk_snand_check_bch_error(struct mtd_info *mtd, u8 *pDataBuf, u8 *sp
 		}
 	}
 	mtd->ecc_stats.failed += failed_sec;
-		if (correct_count > 2 && ret) {
+		if (correct_count > 2 && ret)
 			mtd->ecc_stats.corrected++;
-		} else {
-			printf("NFI Less than 2 bit error, ignore\n");
-		}
 	}
 #else
 	/* We will manually correct the error bits in the last sector, not all the sectors of the page! */
@@ -1579,6 +1590,9 @@ static bool mtk_snand_ready_for_write(struct nand_chip *nand, u32 u4RowAddr, u32
 	unsigned long phys = 0;
 	/* u32 T_phys = 0; */
 #endif
+	/* Toshiba spi nand just use SPI mode*/
+	if (devinfo.id[0] == 0x98)
+		mode = SPI;
 
 	/* Reset NFI HW internal state machine and flush NFI in/out FIFO */
 	if (!mtk_snand_reset_con()) {
@@ -2298,13 +2312,14 @@ int mtk_nand_exec_read_page(struct mtd_info *mtd, u32 u4RowAddr, u32 u4PageSize,
 		buf = pPageBuf;
 	}
 
+	u4RowAddr = mtk_snand_dev_die_select(mtd, u4RowAddr);
 	mtk_snand_rs_reconfig_nfiecc(mtd, u4RowAddr);
 
 	if (mtk_snand_rs_if_require_split()) {
 		u4SecNum--;
 	}
 
-	retry = 0;
+	retry = 2;
 
 mtk_nand_exec_read_page_retry:
 
@@ -2464,6 +2479,7 @@ int mtk_nand_exec_write_page(struct mtd_info *mtd, u32 u4RowAddr, u32 u4PageSize
 	} else
 		buf = pPageBuf;
 
+	u4RowAddr = mtk_snand_dev_die_select(mtd, u4RowAddr);
 	mtk_snand_rs_reconfig_nfiecc(mtd, u4RowAddr);
 
 	if (mtk_snand_ready_for_write(chip, u4RowAddr, 0, true, buf)) {
@@ -2965,12 +2981,10 @@ static int mtk_snand_read_page(struct mtd_info *mtd, struct nand_chip *chip, u8 
 	u16 page_in_block = page % page_per_block;
 	int mapped_block = get_mapping_block_index(block);
 
-	if (mtk_nand_exec_read_page(mtd, page_in_block + mapped_block * page_per_block, mtd->writesize, buf, chip->oob_poi)) {
+	if (mtk_nand_exec_read_page(mtd, page_in_block + mapped_block * page_per_block, mtd->writesize, buf, chip->oob_poi))
 		return 0;
-	}
-	/* else
-		return -EIO; */
-	return 0;
+	else
+		return -EIO;
 }
 
 /******************************************************************************
@@ -3231,6 +3245,7 @@ int mtk_nand_erase_hw(struct mtd_info *mtd, int page)
 	if (SNAND_BUSY < g_snand_dev_status) {
 		printf("[%s] device is not IDLE!!\n", __FUNCTION__);
 	}
+	page = mtk_snand_dev_die_select(mtd, page);
 
 	mtk_snand_dev_erase(page);
 
@@ -3288,7 +3303,7 @@ static int mtk_nand_erase(struct mtd_info *mtd, int page)
  *   Should notice, this function read data without ECC protection.
  *
  *****************************************************************************/
-static int mtk_snand_read_oob_raw(struct mtd_info *mtd, uint8_t *buf, int page_addr, int len)
+int mtk_snand_read_oob_raw(struct mtd_info *mtd, uint8_t *buf, int page_addr, int len)
 {
 	struct nand_chip *chip = (struct nand_chip *)mtd->priv;
 	int bRet = true;
@@ -3302,6 +3317,7 @@ static int mtk_snand_read_oob_raw(struct mtd_info *mtd, uint8_t *buf, int page_a
 
 	num_sec_original = num_sec = len / OOB_AVAI_PER_SECTOR;
 
+	page_addr = mtk_snand_dev_die_select(mtd, page_addr);
 	mtk_snand_rs_reconfig_nfiecc(mtd, page_addr);
 
 	if (((num_sec_original * NAND_SECTOR_SIZE) == mtd->writesize) && mtk_snand_rs_if_require_split()) {
@@ -3368,7 +3384,7 @@ static int mtk_snand_write_oob_raw(struct mtd_info *mtd, const uint8_t * buf, in
 		printf(KERN_WARNING "[%s] invalid parameter, len: %d, buf: %p\n", __FUNCTION__, len, buf);
 		return -EINVAL;
 	}
-
+	page_addr = mtk_snand_dev_die_select(mtd, page_addr);
 	mtk_snand_rs_reconfig_nfiecc(mtd, page_addr);
 
 	while (len > 0) {
@@ -3708,7 +3724,7 @@ static int mtk_snand_verify_buf(struct mtd_info *mtd, const uint8_t *buf, int le
 /**********************************************************
 Description : SNAND_GPIO_config, added by bayi
 ***********************************************************/
-void mtk_snand_gpio_config(int state)
+void mtk_snand_gpio_config(int state, u32 driv_e4, u32 driv_e8)
 {
 	u32 reg;
 	if (state) {
@@ -3723,6 +3739,16 @@ void mtk_snand_gpio_config(int state)
 			reg &= ~(0x0F << 8);
 			reg |= (0x02 << 8);
 			DRV_WriteReg32(GPIO_MODE(0), reg);
+			/* drive E4 */
+			reg = DRV_Reg32(GPIO_DRIV(6));
+			reg &= ~ (0x3F00);
+			reg |= driv_e4;
+			DRV_WriteReg32(GPIO_DRIV(6), reg);
+			/* drive E8*/
+			reg = DRV_Reg32(GPIO_DRIV(7));
+			reg &= ~ (0x3F00);
+			reg |= driv_e8;
+			DRV_WriteReg32(GPIO_DRIV(7), reg);
 	} else {
 		DRV_WriteReg32(GPIO_MODE(5), SNFI_GPIO_BACKUP[0]);
 		DRV_WriteReg32(GPIO_MODE(0), SNFI_GPIO_BACKUP[1]);
@@ -3859,10 +3885,13 @@ static void mtk_nand_init_hw(struct mtk_nand_host *host)
 	DRV_WriteReg16(NFI_DEBUG_CON1_REG16, (WBUF_EN));
 
 	/* NOTE(Bayi): add gpio init and clk select */
-	mtk_snand_gpio_config(TRUE);
+	mtk_snand_gpio_config(TRUE, 0x0000, 0x3f00);
 	mtk_snand_clk_setting();
 	/* NOTE(Nelson): Switch mode to Serial NAND */
 	DRV_WriteReg32(RW_SNAND_CNFG, 1);
+
+	/* Need add for Etron */
+	DRV_WriteReg32(RW_SNAND_DLY_CTL3, 20);
 
 	/* NOTE(Bayi): reset device and set ecc control */
 	gpt_busy_wait_us(SPI_NAND_MAX_RDY_AFTER_RST_LATENCY_US);
@@ -4044,6 +4073,19 @@ int board_nand_init(struct nand_chip *nand_chip)
 
 	if (!mtk_snand_get_device_info(id, &devinfo)) {
 		MSG(INIT, "Not Support this Device! \r\n");
+	}
+
+	/* IO driving adjust */
+	mtk_snand_gpio_config(TRUE, devinfo.SNF_DRIVING_E4, devinfo.SNF_DRIVING_E8);
+
+	/* Sample delay adjust */
+	DRV_WriteReg32(RW_SNAND_DLY_CTL3, devinfo.SNF_DLY_CTL3);
+
+	if (devinfo.advancedmode & SNAND_ADV_TWO_DIE) {
+		mtk_snand_dev_die_select_op(1);
+		/* disable internal ecc, and use mtk ecc */
+		mtk_snand_ecc_control(FALSE);
+		mtk_snand_dev_unlock_all_blocks();
 	}
 
 	if (devinfo.pagesize == 4096) {

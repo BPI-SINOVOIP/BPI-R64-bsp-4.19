@@ -27,7 +27,7 @@ int saveenv(void)
 			goto done;
 
 		ret = mtk_nor_read(saved_offset,
-			saved_size, &retlen, saved_buffer);
+			saved_size, &retlen, (u_char *)saved_buffer);
 		if (ret)
 			goto done;
 	}
@@ -53,14 +53,14 @@ int saveenv(void)
 		goto done;
 
 	puts("Writing to SPI NOR flash...");
-	mtk_nor_write(CONFIG_ENV_OFFSET, 
-		CONFIG_ENV_SIZE, &retlen, &env_new);
+	mtk_nor_write(CONFIG_ENV_OFFSET,
+		CONFIG_ENV_SIZE, &retlen, (const u_char *)&env_new);
 	if (ret)
 		goto done;
 
 	if (CONFIG_ENV_SECT_SIZE > CONFIG_ENV_SIZE) {
 		ret = mtk_nor_write(saved_offset,
-			saved_size, &retlen, saved_buffer);
+			saved_size, &retlen, (const u_char *)saved_buffer);
 		if (ret)
 			goto done;
 	}
@@ -84,7 +84,7 @@ void env_relocate_spec(void)
 	buf = (char *)malloc(CONFIG_ENV_SIZE);
 
 	ret = mtk_nor_read(CONFIG_ENV_OFFSET,
-				CONFIG_ENV_SIZE, &retlen, buf);
+				CONFIG_ENV_SIZE, &retlen, (u_char *)buf);
 	if (ret) {
 		set_default_env("!spi_flash_read() failed");
 		goto out;

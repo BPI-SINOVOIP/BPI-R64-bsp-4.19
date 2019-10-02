@@ -46,6 +46,7 @@ extern int mtk_nand_block_bad_hw(struct mtd_info *mtd, loff_t ofs);
 extern int mtk_nand_erase_hw(struct mtd_info *mtd, int page);
 extern int mtk_nand_block_markbad_hw(struct mtd_info *mtd, loff_t ofs);
 extern int mtk_nand_exec_write_page(struct mtd_info *mtd, u32 row, u32 page_size, u8 * dat, u8 * oob);
+extern int mtk_snand_read_oob_raw(struct mtd_info *mtd, uint8_t *buf, int page_addr, int len);
 
 
 /***************************************************************
@@ -53,11 +54,13 @@ extern int mtk_nand_exec_write_page(struct mtd_info *mtd, u32 row, u32 page_size
 * Different function interface for preloader/uboot/kernel      *
 *                                                              *
 ***************************************************************/
+#if defined (CONFIG_MTK_SPI_NAND_SUPPORT)
+    int init_bmt(struct nand_chip *nand, int size);
+#else
+    bmt_struct *init_bmt(struct nand_chip *nand, int size);
+#endif
 void set_bad_index_to_oob(u8 * oob, u16 index);
-
-
-bmt_struct *init_bmt(struct nand_chip *nand, int size);
-bool update_bmt(u64 offset, update_reason_t reason, u8 * dat, u8 * oob);
 unsigned short get_mapping_block_index(int index);
+bool update_bmt(u64 offset, update_reason_t reason, u8 * dat, u8 * oob);
 
 #endif                          // #ifndef __BMT_H__

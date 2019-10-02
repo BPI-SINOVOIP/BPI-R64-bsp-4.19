@@ -1,13 +1,3 @@
-/******************************************************************************
- * mt_gpio.c - MTKLinux GPIO Device Driver
- *
- * Copyright 2008-2009 MediaTek Co.,Ltd.
- *
- * DESCRIPTION:
- *     This file provid the other drivers GPIO relative functions
- *
- ******************************************************************************/
-
 //#include <asm/arch/mt_reg_base.h>
 #include <asm/arch/mt_gpio.h>
 //#include <asm/arch/debug.h>

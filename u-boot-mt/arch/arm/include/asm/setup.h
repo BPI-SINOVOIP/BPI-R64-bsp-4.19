@@ -31,17 +31,9 @@
  *    guaranteed to contain useful data in setup_arch()
  */
 
-
 #if defined (CONFIG_MTK_MTD_NAND)
-#if defined (MT7623)
-#include <asm/arch-mt7623/nand/nand_device_list.h>
-#elif defined (MT7622)
-#include <asm/arch-mt7622/nand/nand_device_list.h>
-#elif defined (MT7626)
-#include <asm/arch-mt7626/nand/nand_device_list.h>
+#include <asm/arch/nand/nand_device_list.h>
 #endif
-#endif
-
 
 #define COMMAND_LINE_SIZE 1024
 
@@ -249,7 +241,7 @@ struct tag {
 #ifdef NAND_ABTC_ATAG
 		struct tag_nand_number tag_nand_number;
 		flashdev_info gen_FlashTable_p;
-#endif		
+#endif
 	} u;
 };
 

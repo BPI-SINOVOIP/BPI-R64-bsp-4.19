@@ -34,8 +34,18 @@
 #include <linux/string.h>
 #include <malloc.h>
 
-static void *SzAlloc(void *p, size_t size) { p = p; return malloc(size); }
-static void SzFree(void *p, void *address) { p = p; free(address); }
+void *__sys_lzma_malloc(size_t size) { return malloc(size); }
+
+void *sys_lzma_malloc(size_t)
+	__attribute__((weak, alias("__sys_lzma_malloc")));
+
+void __sys_lzma_free(void *address) { free(address); }
+
+void sys_lzma_free(void *)
+	__attribute__((weak, alias("__sys_lzma_free")));
+
+static void *SzAlloc(void *p, size_t size) { p = p; return sys_lzma_malloc(size); }
+static void SzFree(void *p, void *address) { p = p; sys_lzma_free(address); }
 
 int lzmaBuffToBuffDecompress (unsigned char *outStream, SizeT *uncompressedSize,
                   unsigned char *inStream,  SizeT  length)

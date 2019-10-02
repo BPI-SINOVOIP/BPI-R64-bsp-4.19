@@ -38,7 +38,10 @@
 #include <post.h>
 #include <logbuff.h>
 #include <asm/sections.h>
+
+#if (!defined (LEOPARD_ASIC_BOARD))&&(!defined (LEOPARD_FPGA_BOARD))
 #include <asm/arch/mt_typedefs.h>
+#endif
 
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
@@ -512,8 +515,7 @@ static void display_fdt_model(const void *blob)
  *
  ************************************************************************
  */
-
-
+#if (!defined (LEOPARD_ASIC_BOARD))&&(!defined (LEOPARD_FPGA_BOARD))
 #define MCUSYS_CFGREG_BASE           0x10200000
 #define L2C_SIZE_CFG_OFF 5
 
@@ -527,7 +529,7 @@ void config_shared_SRAM_size(void)
         cache_cfg |= 0x3 << L2C_SIZE_CFG_OFF;
         DRV_WriteReg(MCUSYS_CFGREG_BASE, cache_cfg);
 }
-
+#endif
 void board_init_r(gd_t *id, ulong dest_addr)
 {
 	ulong malloc_start;
@@ -539,10 +541,10 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	bootstage_mark_name(BOOTSTAGE_ID_START_UBOOT_R, "board_init_r");
 
 	monitor_flash_len = (ulong)&__rel_dyn_end - (ulong)_start;
-
+#if (!defined (LEOPARD_ASIC_BOARD))&&(!defined (LEOPARD_FPGA_BOARD))
 	/* config SRAM back from L2 cache for DA relocation */
 	config_shared_SRAM_size();
-
+#endif
 	/* Enable caches */
 	enable_caches();
 

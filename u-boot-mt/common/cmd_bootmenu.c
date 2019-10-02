@@ -514,7 +514,11 @@ void menu_display_statusline(struct menu *m)
 	printf(ANSI_CURSOR_POSITION, menu->count + 5, 1);
 	puts(ANSI_CLEAR_LINE);
 	printf(ANSI_CURSOR_POSITION, menu->count + 6, 1);
-	puts("  Press UP/DOWN to move or Press 1~9,a~b to choose, ENTER to select");
+	if( menu->count < 10)
+	printf("  Press UP/DOWN to move or Press 1~%d to choose, ENTER to select", menu->count - 1);
+	else
+	printf("  Press UP/DOWN to move or Press 1~9,a~%c to choose, ENTER to select", menu->count - 1 - 10 + 'a');
+
 	puts(ANSI_CLEAR_LINE_TO_END);
 	printf(ANSI_CURSOR_POSITION, menu->count + 7, 1);
 	puts(ANSI_CLEAR_LINE);

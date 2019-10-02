@@ -1,12 +1,3 @@
-;*****************************************************************************
-;  Copyright Statement:
-;  --------------------
-;  This software is protected by Copyright and the information contained
-;  herein is confidential. The software may not be copied and the information
-;  contained herein may not be used or disclosed except with the written
-;  permission of MediaTek Inc. (C) 2011
-;
-;*****************************************************************************
 ;;================================================
 ;; PURPOSE:     FPGA Bring Up
 ;; CREATE_DATE: 2014/09/09

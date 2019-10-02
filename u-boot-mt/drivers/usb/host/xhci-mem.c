@@ -24,8 +24,6 @@
 
 #include <usb.h>
 
-#include <rt_mmap.h>
-
 #include "xhci.h"
 
 //#define XHCI_MEM_DEBUG

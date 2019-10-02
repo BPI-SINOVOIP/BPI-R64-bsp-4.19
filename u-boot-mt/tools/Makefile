@@ -79,12 +79,14 @@ dumpimage-mkimage-objs := aisimage.o \
 			imagetool.o \
 			imximage.o \
 			kwbimage.o \
+			mtkimage.o \
 			md5.o \
 			mxsimage.o \
 			omapimage.o \
 			os_support.o \
 			pblimage.o \
 			sha1.o \
+			sha256.o \
 			ublimage.o \
 			$(LIBFDT_OBJS) \
 			$(RSA_OBJS-y)

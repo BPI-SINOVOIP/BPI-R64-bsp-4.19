@@ -208,20 +208,8 @@ endif
 # Mediatek proprietary menuconfig
 -include .config
 
-ifeq ($(MT7623), y)
 CROSS_COMPILE_PATH = /opt/buildroot-gcc492_arm/usr/bin
 CROSS_COMPILE = $(CROSS_COMPILE_PATH)/arm-linux-
-endif
-
-ifeq ($(MT7622), y)
-CROSS_COMPILE_PATH = /opt/buildroot-gcc492_arm/usr/bin
-CROSS_COMPILE = $(CROSS_COMPILE_PATH)/arm-linux-
-endif
-
-ifeq ($(MT7626), y)
-CROSS_COMPILE_PATH = /opt/buildroot-gcc492_arm/usr/bin
-CROSS_COMPILE = $(CROSS_COMPILE_PATH)/arm-linux-
-endif
 
 # SHELL used by kbuild
 CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
@@ -302,7 +290,7 @@ export KBUILD_CHECKSRC KBUILD_SRC KBUILD_EXTMOD
 #         cmd_cc_o_c       = $(CC) $(c_flags) -c -o $@ $<
 #
 # If $(quiet) is empty, the whole command will be printed.
-# If it is set to "quiet_", only the short version will be printed. 
+# If it is set to "quiet_", only the short version will be printed.
 # If it is set to "silent_", nothing will be printed at all, since
 # the variable $(silent_cmd_cc_o_c) doesn't exist.
 #
@@ -349,6 +337,11 @@ endif
 ifeq ($(MT7626), y)
 mtk_board = mt7626_evb_config
 mtk_chip = mt7626
+endif
+
+ifeq ($(MT7629), y)
+mtk_board = mt7629_evb_config
+mtk_chip = mt7629
 endif
 
 ifeq ($(CONFIG_MTK_MLC_NAND_SUPPORT), y)
@@ -668,7 +661,7 @@ libs-$(CONFIG_HAS_POST) += post/
 libs-y += test/
 libs-y += test/dm/
 libs-$(CONFIG_DM_DEMO) += drivers/demo/
-libs-$(FW_UPGRADE_BY_WEBUI) += uip/ 
+libs-$(FW_UPGRADE_BY_WEBUI) += uip/
 ifneq (,$(filter $(SOC), mx25 mx27 mx5 mx6 mx31 mx35 mxs vf610))
 libs-y += arch/$(ARCH)/imx-common/
 endif
@@ -749,6 +742,7 @@ ALL-$(CONFIG_ONENAND_U_BOOT) += u-boot-onenand.bin
 ALL-$(CONFIG_RAMBOOT_PBL) += u-boot.pbl
 ALL-$(CONFIG_SPL) += spl/u-boot-spl.bin
 ALL-$(CONFIG_SPL_FRAMEWORK) += u-boot.img
+ALL-$(CONFIG_SPL_DECOMPRESS_UBOOT) += u-boot.lzma.img
 ALL-$(CONFIG_TPL) += tpl/u-boot-tpl.bin
 ALL-$(CONFIG_OF_SEPARATE) += u-boot.dtb u-boot-dtb.bin
 ALL-$(CONFIG_OF_HOSTFILE) += u-boot.dtb
@@ -775,6 +769,15 @@ ALL-y += u-boot-mtk.bin
 endif
 endif
 
+ifneq ($(CONFIG_MEDIATEK),)
+ifeq ($(CONFIG_SYS_SOC), "leopard")
+
+
+ALL-$(CONFIG_SPL) += spl/u-boot-spl-mtk.bin
+ALL-y += u-boot-mtk.bin
+endif
+endif
+
 LDFLAGS_u-boot += $(LDFLAGS_FINAL)
 ifneq ($(CONFIG_SYS_TEXT_BASE),)
 LDFLAGS_u-boot += -Ttext $(CONFIG_SYS_TEXT_BASE)
@@ -797,7 +800,7 @@ cmd_pad_cat = $(cmd_objcopy) && $(append) || rm -f $@
 
 #all:	$(shell cp ./nand_partition/$(mtk_chip)/$(mtk_nand_type)/partition_define.h ./arch/arm/include/asm/arch-$(mtk_chip)/nand/partition_define.h) 		\
 		$(shell cp ./nand_partition/$(mtk_chip)/$(mtk_nand_type)/partition_define.h ./drivers/misc/mediatek/nand/$(mtk_chip)/partition_define.h)      \
-			$(shell cp ./nand_partition/$(mtk_chip)/$(mtk_nand_type)/partition_define_private.h ./arch/arm/include/asm/arch-$(mtk_chip)/nand/partition_define_private.h) 		\
+		$(shell cp ./nand_partition/$(mtk_chip)/$(mtk_nand_type)/partition_define_private.h ./arch/arm/include/asm/arch-$(mtk_chip)/nand/partition_define_private.h) 		\
 		$(ALL-y)
 all: $(ALL-y)
 PHONY += dtbs
@@ -826,9 +829,6 @@ u-boot.bin: u-boot FORCE
 	$(call if_changed,objcopy)
 	$(call DO_STATIC_RELA,$<,$@,$(CONFIG_SYS_TEXT_BASE))
 	$(BOARD_SIZE_CHECK)
-
-u-boot-mtk.bin: u-boot.bin
-	$(Q)./mkimage u-boot.bin LK > u-boot-mtk.bin
 
 u-boot.ldr:	u-boot
 		$(CREATE_LDR_ENV)
@@ -871,6 +871,19 @@ u-boot.sha1:	u-boot.bin
 
 u-boot.dis:	u-boot
 		$(OBJDUMP) -d $< > $@
+
+quiet_cmd_lzma = LZMA    $@
+cmd_lzma = lzma -c -z -k -9 $< > $@
+
+u-boot.bin.lzma: u-boot.bin FORCE
+	$(call if_changed,lzma)
+
+MKIMAGEFLAGS_u-boot.lzma.img = -A $(ARCH) -T standalone -C lzma -O u-boot \
+	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_UBOOT_START) \
+	-n "U-Boot $(UBOOTRELEASE) for $(BOARD) board"
+
+u-boot.lzma.img: u-boot.bin.lzma FORCE
+	$(call if_changed,mkimage)
 
 ifdef CONFIG_TPL
 SPL_PAYLOAD := tpl/u-boot-with-tpl.bin
@@ -942,6 +955,74 @@ endif
 u-boot-img.bin: spl/u-boot-spl.bin u-boot.img FORCE
 	$(call if_changed,cat)
 
+
+# Mediatek joins the u-boot-spl.bin and the u-boot.img,
+# The boot-rom needs to decrypt the header of spl correctly
+# when bootup, and then the boot-rom jumps to
+# the spl-entry to run continuously.
+ifneq ($(CONFIG_MEDIATEK),)
+ifeq ($(CONFIG_SYS_SOC), "leopard")
+ifeq ($(CONFIG_SPL),y)
+
+MKIMAGEFLAGS_u-boot-spl-mtk.bin = -T mtkimage \
+	-a $(CONFIG_SPL_TEXT_BASE) -e $(CONFIG_SPL_TEXT_BASE) \
+	-n "$(patsubst "%",%,$(CONFIG_MTK_BROM_HEADER_INFO))"
+spl/u-boot-spl-mtk.bin: spl/u-boot-spl.bin FORCE
+	$(call if_changed,mkimage)
+
+endif
+
+# On Leopard, u-boot.img is appended to U-Boot SPL.
+ifeq ($(CONFIG_SPL_DECOMPRESS_UBOOT),y)
+UBOOT_IMG_FILE := u-boot.lzma.img
+else
+UBOOT_IMG_FILE := u-boot.img
+endif
+
+# Pad u-boot-spl-mtk.bin
+quiet_cmd_spl_pad_ff = PAD     $@
+cmd_spl_pad_ff = spl_size=$$(wc -c < $<) && \
+	pure_pad_size=$$(($(CONFIG_SPL_PAD_ALIGNMENT) - ($$spl_size % $(CONFIG_SPL_PAD_ALIGNMENT)))) && \
+	if [ "$$pure_pad_size" -eq "$$(($(CONFIG_SPL_PAD_ALIGNMENT)))" ]; then pure_pad_size=0; fi && \
+	spl_pad_size=$$(($$spl_size + $$pure_pad_size)) && \
+	dd if=/dev/zero bs=$${spl_pad_size} count=1 2> /dev/null | tr "\000" "\377" > $@ && \
+	dd if=$< of=$@ seek=0 conv=notrunc 2> /dev/null
+
+
+ifeq ($(ON_BOARD_SPI_NOR_FLASH_COMPONENT), y)
+spl/u-boot-spl-mtk-pad.bin: spl/u-boot-spl-mtk-nor.bin FORCE
+	$(call if_changed,spl_pad_ff)
+endif
+ifeq ($(ON_BOARD_2K_64_SNAND_COMPONENT), y)
+spl/u-boot-spl-mtk-pad.bin: spl/u-boot-spl-mtk-nand2k_64.bin FORCE
+	$(call if_changed,spl_pad_ff)
+endif
+ifeq ($(ON_BOARD_2K_128_SNAND_COMPONENT), y)
+spl/u-boot-spl-mtk-pad.bin: spl/u-boot-spl-mtk-nand2k_128.bin FORCE
+	$(call if_changed,spl_pad_ff)
+endif
+ifeq ($(ON_BOARD_4K_256_SNAND_COMPONENT), y)
+spl/u-boot-spl-mtk-pad.bin: spl/u-boot-spl-mtk-nand4k_256.bin FORCE
+	$(call if_changed,spl_pad_ff)
+endif
+# Concatenate spl and u-boot
+u-boot-mtk.bin: spl/u-boot-spl-mtk-pad.bin $(UBOOT_IMG_FILE) FORCE
+	$(call if_changed,cat)
+
+endif
+endif
+
+ifneq ($(CONFIG_SYS_SOC), "leopard")
+
+MKIMAGEFLAGS_u-boot-mtk.bin = -T mtkimage \
+	-a $(CONFIG_SYS_TEXT_BASE) -e $(CONFIG_SYS_TEXT_BASE) \
+	-n "lk=1"
+
+u-boot-mtk.bin: u-boot.bin FORCE
+	$(call if_changed,mkimage)
+
+endif
+
 # PPC4xx needs the SPL at the end of the image, since the reset vector
 # is located at 0xfffffffc. So we can't use the "u-boot-img.bin" target
 # and need to introduce a new build target with the full blown U-Boot
@@ -983,7 +1064,7 @@ ifeq ($(CONFIG_KALLSYMS),y)
 	$(call cmd,u-boot__) common/system_map.o
 endif
 
-# The actual objects are generated when descending, 
+# The actual objects are generated when descending,
 # make sure no implicit rule kicks in
 $(sort $(u-boot-init) $(u-boot-main)): $(u-boot-dirs) ;
 
@@ -1393,7 +1474,7 @@ menuconfig: config.in
 	$(CONFIG_SHELL) menu-config/Menuconfig config.in
 	cp autoconf.h include/configs/autoconf.h
 	make ubootboardconfig
-	
+
 ubootboardconfig:
 	make $(mtk_board)
 
@@ -1446,7 +1527,7 @@ endif
 	$(build)=$(build-dir) $(@:.ko=.o)
 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
 
-# FIXME Should go into a make.lib or something 
+# FIXME Should go into a make.lib or something
 # ===========================================================================
 
 quiet_cmd_rmdirs = $(if $(wildcard $(rm-dirs)),CLEAN   $(wildcard $(rm-dirs)))

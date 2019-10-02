@@ -219,6 +219,7 @@ PT_THREAD(send_headers(struct httpd_state *s, const char *statushdr))
   }
   PSOCK_END(&s->sout);
 }
+
 /*---------------------------------------------------------------------------*/
 static
 PT_THREAD(handle_output(struct httpd_state *s))
@@ -227,60 +228,30 @@ PT_THREAD(handle_output(struct httpd_state *s))
   static unsigned long length = 0;
   unsigned long e_end;
   int get_addr_boundary(ulong *);
-  //int do_bootm(cmd_tbl_t *, int, int, char *argv[]);
- 
-//printf("	handle_output()\n"); 
   PT_BEGIN(&s->outputpt);
- 
+
   if(strncmp(s->filename, http_upload_cgi, sizeof(http_upload_cgi)) == 0) {
-	//printf("s->filename = http_upload_cgi\n");
     httpd_fs_open(http_done1_html, &s->file);
     strcpy(s->filename, http_done1_html);
     PT_WAIT_THREAD(&s->outputpt,
 		   send_headers(s,
 		   http_header_200));
-	//printf("after PT_WAIT_THREAD\n");
     length = simple_strtoul(content_boundary, NULL, 16);
-	finish = 1;
-//    length -= CFG_HTTP_DL_ADDR;
+    finish = 1;
+    length -= CFG_HTTP_DL_ADDR;
 
-    /* FIXME: should consider 8M, 16M for RT2880 */
-    /*if(length <= (bd->bi_flashsize - (CFG_BOOTLOADER_SIZE + CFG_CONFIG_SIZE + CFG_FACTORY_SIZE))) */
-//    if(1) {
-//#if defined (CFG_ENV_IS_IN_NAND)
-//	printf("CFG_ENV_IS_IN_NAND\n");
-//      ranand_erase_write((u8 *)CFG_HTTP_DL_ADDR, CFG_KERN_ADDR-CFG_FLASH_BASE, length);
-//#elif defined (CFG_ENV_IS_IN_SPI)
-//	printf("CFG_ENV_IS_IN_SPI\n");
-//      raspi_erase_write((u8 *)CFG_HTTP_DL_ADDR, CFG_KERN_ADDR-CFG_FLASH_BASE, length);
-//#else //CFG_ENV_IS_IN_FLASH
-//	printf("CFG_ENV_IS_IN_FLASH\n");
-//      e_end = CFG_KERN_ADDR + length;
-//      if(0 == get_addr_boundary(&e_end)) {
-//        printf("Erase linux kernel block !!\n");
-//        printf("From 0x%X To 0x%X\n", CFG_KERN_ADDR, e_end);
-//        flash_sect_erase(CFG_KERN_ADDR, e_end);
-//
-//        /* top-half of done.html */
-//        PT_WAIT_THREAD(&s->outputpt, send_file(s));
-//
-//        printf("\n Copy linux image[%d byte] to Flash[0x%08X].... \n", length, CFG_KERN_ADDR);
-//        if(flash_write((unsigned char *)CFG_HTTP_DL_ADDR, CFG_KERN_ADDR, length) == 0) {
-//          /* bottom-half of done.html */
-//          httpd_fs_open(http_done2_html, &s->file);
-//          strcpy(s->filename, http_done2_html);
-//          PT_WAIT_THREAD(&s->outputpt, send_file(s));
-//
-//          PSOCK_CLOSE(&s->sout);
-//
-//          sprintf(addr, "0x%X", CFG_KERN_ADDR);
-//          argv[0] = NULL;
-//          argv[1] = addr;
-//      //    do_bootm(NULL, 0, 2, argv);            
-//        }
-//      }
-//#endif //CFG_ENV_IS_IN_FLASH
-//    }
+    if(1) {
+#if defined (CONFIG_MTK_MTD_NAND)
+    printf("CONFIG_MTK_MTD_NAND ranand_erase_write:load_addr=0x%x,nand_offset=0x%x,length=0x%x\n",
+		CFG_HTTP_DL_ADDR,CONFIG_NAND_LINUX_OFFSET,length);
+      ranand_erase_write((u_char *)CFG_HTTP_DL_ADDR, CONFIG_NAND_LINUX_OFFSET, length);
+/*#elif defined (CONFIG_ENV_IS_IN_NOR)
+      printf("CONFIG_ENV_IS_IN_NOR raspi_erase_write:load_addr=0x%x,nand_offset=0x%x,length=0x%x\n",
+		  CFG_HTTP_DL_ADDR,CONFIG_NOR_LINUX_OFFSET,length);
+      raspi_erase_write((u8 *)CFG_HTTP_DL_ADDR, CONFIG_NOR_LINUX_OFFSET, length);
+      }*/
+#endif //CONFIG_ENV_IS_IN_NOR
+    }
   } else if(!httpd_fs_open(s->filename, &s->file)) {
     httpd_fs_open(http_404_html, &s->file);
     strcpy(s->filename, http_404_html);
@@ -309,7 +280,7 @@ PT_THREAD(handle_output(struct httpd_state *s))
 static
 PT_THREAD(handle_input(struct httpd_state *s))
 {
-//	printf("	handle_input()\n");
+  //printf("handle_input()\n");
 	if(s->filename !=NULL)
 		//printf("filename = %s\n", s->filename); 
   PSOCK_BEGIN(&s->sin);
@@ -375,7 +346,7 @@ PT_THREAD(handle_input(struct httpd_state *s))
 static void
 handle_connection(struct httpd_state *s)
 {
-//	printf("handle_connection()\n");
+  //printf("handle_connection()\n");
   handle_input(s);
   if(s->state == STATE_OUTPUT) {
     handle_output(s);

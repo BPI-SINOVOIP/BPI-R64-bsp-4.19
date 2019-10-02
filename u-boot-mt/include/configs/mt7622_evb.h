@@ -32,12 +32,13 @@
  */
 /* Cache */
 // Iverson debug
-//BPI
-#define CONFIG_SYS_DCACHE_OFF
+//#define CONFIG_SYS_DCACHE_OFF
 #endif
 
 /* Machine ID */
 #define CONFIG_MACH_TYPE                    7622
+#define CONFIG_SUPPORT_LINUX32BIT	        0
+
 
 /**********************************************************************************************
  *                                          Memory
@@ -52,18 +53,20 @@
 #define CONFIG_NR_DRAM_BANKS		        1
 #define CONFIG_SYS_SDRAM_BASE		        0x40000000
 
+#if CONFIG_CUSTOMIZE_DRAM_SIZE
 #if defined(ON_BOARD_512Mb_DRAM_COMPONENT)
 #define CONFIG_SYS_SDRAM_SIZE               SZ_64M
 #elif defined(ON_BOARD_1024Mb_DRAM_COMPONENT)
 #define CONFIG_SYS_SDRAM_SIZE               SZ_128M
-#elif defined(ON_BOARD_2048Mb_DRAM_COMPONENT) 
+#elif defined(ON_BOARD_2048Mb_DRAM_COMPONENT)
 #define CONFIG_SYS_SDRAM_SIZE               SZ_256M
 #elif defined(ON_BOARD_4096Mb_DRAM_COMPONENT)
 #define CONFIG_SYS_SDRAM_SIZE               SZ_512M
 #elif defined(ON_BOARD_8192Mb_DRAM_COMPONENT)
 #define CONFIG_SYS_SDRAM_SIZE               SZ_1G
-#else
-#error "memory defined error!!!")
+#elif defined(ON_BOARD_2GB_DRAM_COMPONENT)
+#define CONFIG_SYS_SDRAM_SIZE               SZ_2G
+#endif
 #endif
 
 /* Code Layout */
@@ -77,15 +80,16 @@
                                                 CONFIG_SYS_UBOOT_MAX_SIZE - \
                                                 GENERATED_GBL_DATA_SIZE)
 
-
-#if (CONFIG_SYS_SDRAM_SIZE == SZ_64M) || (CONFIG_SYS_SDRAM_SIZE == SZ_128M) || (CONFIG_SYS_SDRAM_SIZE == SZ_256M) || \
-    (CONFIG_SYS_SDRAM_SIZE == SZ_512M) || (CONFIG_SYS_SDRAM_SIZE == SZ_1G)
 #if defined(MT7622_FPGA_BOARD)
 #define CONFIG_SYS_MALLOC_LEN               SZ_4M
 #else
 #define CONFIG_SYS_MALLOC_LEN               SZ_32M
 #endif
 
+#if CONFIG_SUPPORT_LINUX32BIT
+#define CONFIG_SYS_DECOMP_ADDR              0x40008000
+#define CONFIG_SYS_LOAD_ADDR                0x42000000
+#else
 /* RichOS memory partitions */
 #define CONFIG_SYS_DECOMP_ADDR              0x40080000
 #if defined(MT7622_FPGA_BOARD)
@@ -93,6 +97,10 @@
 #else
 #define CONFIG_SYS_LOAD_ADDR                0x4007FF28
 #endif
+#endif
+
+#define CFG_HTTP_DL_ADDR		CONFIG_SYS_LOAD_ADDR
+
 #define CONFIG_SYS_IMAGE_HDR_ADDR           CONFIG_SYS_LOAD_ADDR
 
 /* Linux DRAM definition */
@@ -104,10 +112,6 @@
  * the maximum mapped by the Linux kernel during initialization.
  */
 #define CONFIG_SYS_BOOTM_LEN	            0x4000000
-#else
-#error "memory partition error!!!"
-
-#endif
 
 /**********************************************************************************************
  *                                           Board
@@ -267,7 +271,7 @@
 #define ENV_BOOT_WRITE_IMAGE \
 	    "boot_wr_img=filesize_check " __stringify(CONFIG_MAX_NAND_LINUX_SIZE) \
 		";if test ${filesize_result} = good; then image_blks " __stringify(CONFIG_MAX_NAND_BLOCK_SIZE) \
-		";nand erase " __stringify(CONFIG_NAND_LINUX_OFFSET) "  ${filesize}" \
+		";nand erase.spread " __stringify(CONFIG_NAND_LINUX_OFFSET) "  ${filesize}" \
 		";image_blks " __stringify(CONFIG_MAX_NAND_PAGE_SIZE) \
 		";nand write ${loadaddr} " __stringify(CONFIG_NAND_LINUX_OFFSET) " ${filesize};fi\0"	
 #define ENV_BOOT_READ_IMAGE \
@@ -277,26 +281,26 @@
 #define ENV_WRITE_UBOOT \
 	"wr_uboot=filesize_check " __stringify(CONFIG_MAX_UBOOT_SIZE) \
 	";if test ${filesize_result} = good; then mtk_image_blks " __stringify(CONFIG_MAX_NAND_BLOCK_SIZE) \
-	";nand erase " __stringify(CONFIG_NAND_UBOOT_OFFSET) "  ${filesize} "\
+	";nand erase.spread " __stringify(CONFIG_NAND_UBOOT_OFFSET) "  ${filesize} "\
 	";mtk_image_blks " __stringify(CONFIG_MAX_NAND_PAGE_SIZE) \
 	";nand write ${loadaddr} " __stringify(CONFIG_NAND_UBOOT_OFFSET) " ${filesize};fi\0"
 #define ENV_WRITE_ATF \
 	"wr_atf=filesize_check " __stringify(CONFIG_MAX_NAND_ATF_SIZE) \
 	";if test ${filesize_result} = good; then mtk_image_blks " __stringify(CONFIG_MAX_NAND_BLOCK_SIZE) \
-	";nand erase " __stringify(CONFIG_NAND_ATF_OFFSET) "	${filesize} "\
+	";nand erase.spread " __stringify(CONFIG_NAND_ATF_OFFSET) "	${filesize} "\
 	";mtk_image_blks " __stringify(CONFIG_MAX_NAND_PAGE_SIZE) \
 	";nand write ${loadaddr} " __stringify(CONFIG_NAND_ATF_OFFSET) " ${filesize};fi\0"
 #define ENV_WRITE_PRELOADER \
 	"wr_pl=filesize_check " __stringify(CONFIG_MAX_NAND_PL_SIZE) \
-	";if test ${filesize_result} = good; then nand erase " __stringify(CONFIG_NAND_HEADER_OFFSET) " 40000 "\
+	";if test ${filesize_result} = good; then nand erase.spread " __stringify(CONFIG_NAND_HEADER_OFFSET) " 40000 "\
 	";nand write ${loadaddr} " __stringify(CONFIG_NAND_HEADER_OFFSET) " 40000;fi\0"
 #define ENV_WRITE_ROM_HEADER \
 	"wr_rom_hdr=filesize_check " __stringify(CONFIG_MAX_NAND_PL_SIZE) \
-	";if test ${filesize_result} = good; then nand erase " __stringify(CONFIG_NAND_HEADER_OFFSET) " 20000 "\
+	";if test ${filesize_result} = good; then nand erase.spread " __stringify(CONFIG_NAND_HEADER_OFFSET) " 20000 "\
 	";nand write ${loadaddr} " __stringify(CONFIG_NAND_HEADER_OFFSET) " 20000;fi\0"
 #define ENV_WRITE_CTP \
 	"wr_ctp=filesize_check " __stringify(CONFIG_MAX_NAND_CTP_SIZE) \
-	";if test ${filesize_result} = good; then nand erase " __stringify(CONFIG_NAND_CTP_OFFSET) " 3000000 "\
+	";if test ${filesize_result} = good; then nand erase.spread " __stringify(CONFIG_NAND_CTP_OFFSET) " 3000000 "\
 	";nand write ${loadaddr} " __stringify(CONFIG_NAND_CTP_OFFSET) " 3000000;fi\0"		
 #define ENV_BOOT_READ_CTP \
 	"boot_rd_ctp=nand read 0x40000000 " __stringify(CONFIG_NAND_CTP_OFFSET) " 3000000\0"
@@ -321,77 +325,87 @@
 #define CONFIG_SYS_MAX_FLASH_SECT           512
 
 #define CONFIG_EMMC_HEADER_BLOCK            0x0
-#define CONFIG_MAX_HEADER_SIZE              0x50           // 0x50 * 512 = 40KB
+#define CONFIG_MAX_HEADER_BLOCK_NUM         0x50
+#define CONFIG_MAX_HEADER_SIZE              0xA000           // 0x50 * 512 = 40KB
 
 #define CONFIG_EMMC_GPT_BLOCK                0x0
-#define CONFIG_MAX_GPT_SIZE                  0x22           // 0x22 * 512 = 17KB
+#define CONFIG_MAX_GPT_BLOCK_NUM             0x22
+#define CONFIG_MAX_GPT_SIZE                  0x4400           // 0x22 * 512 = 17KB
 
 #define CONFIG_EMMC_PL_BLOCK                0x0
-#define CONFIG_MAX_PL_SIZE                  0x200           // 0x200 * 512 = 256KB
+#define CONFIG_MAX_PL_BLOCK_NUM             0x200
+#define CONFIG_MAX_PL_SIZE                  0x40000           // 0x200 * 512 = 256KB
 
 #define CONFIG_EMMC_ATF_BLOCK               0x400
-#define CONFIG_MAX_ATF_SIZE                 0x200           // 0x200 * 512 = 256KB
+#define CONFIG_MAX_ATF_BLOCK_NUM            0x200
+#define CONFIG_MAX_ATF_SIZE                 0x40000           // 0x200 * 512 = 256KB
 
 #define CONFIG_EMMC_UBOOT_BLOCK             0x600
-#define CONFIG_MAX_UBOOT_SIZE               0x400           // 0x400 * 512 = 512KB
+#define CONFIG_MAX_UBOOT_BLOCK_NUM          0x400
+#define CONFIG_MAX_UBOOT_SIZE               0x80000           // 0x400 * 512 = 512KB
 
 #define CONFIG_EMMC_NVRAM_BLOCK		    0xA00
-#define CONFIG_MAX_NVRAM_SIZE               0x400           // 0x400 * 512 = 512KB
+#define CONFIG_MAX_NVRAM_BLOCK_NUM          0x400
+#define CONFIG_MAX_NVRAM_SIZE               0x80000           // 0x400 * 512 = 512KB
 
 #define CONFIG_EMMC_RF_BLOCK                0xE00
-#define CONFIG_MAX_RF_SIZE                  0x200           // 0x200 * 512 = 256KB
+#define CONFIG_MAX_RF_BLOCK_NUM             0x200
+#define CONFIG_MAX_RF_SIZE                  0x40000           // 0x200 * 512 = 256KB
 
 #define CONFIG_EMMC_LINUX_BLOCK             0x1000
-#define CONFIG_MAX_LINUX_SIZE               0xa000         //0xa000*512 =20M
+#define CONFIG_MAX_LINUX_BLOCK_NUM          0x18000
+#define CONFIG_MAX_LINUX_SIZE               0x1E00000         //0x18000*512 =30M
 
 #define CONFIG_EMMC_CTP_BLOCK               0x1000
-#define CONFIG_MAX_CTP_SIZE                 0xa000         //0xa000*512 =20M
+#define CONFIG_MAX_CTP_BLOCK_NUM            0xa000
+#define CONFIG_MAX_CTP_SIZE                 0x1400000         //0xa000*512 =20M
 
 #define CONFIG_EMMC_FLASHIMAGE_BLOCK               0x0
-#define CONFIG_MAX_FLASHIMAGE_SIZE                 0xa000         //0xa000*512 =20M
+#define CONFIG_MAX_FLASHIMAGE_BLOCK_NUM            0xa000
+#define CONFIG_MAX_FLASHIMAGE_SIZE                 0x1400000         //0xa000*512 =20M
 
 #define ENV_BOOT_WRITE_IMAGE \
-    "boot_wr_img=filesize_check " __stringify(CONFIG_MAX_LINUX_SIZE*512) \
+    "boot_wr_img=filesize_check " __stringify(CONFIG_MAX_LINUX_SIZE) \
 	";if test ${filesize_result} = good; then image_blks " __stringify(CONFIG_SYS_MAX_FLASH_SECT) \
-    "  ${filesize};mmc device 0;mmc write ${loadaddr} " __stringify(CONFIG_EMMC_LINUX_BLOCK) " ${filesize};fi\0"
+    "  ${filesize};mmc device 0;mmc write ${loadaddr} " __stringify(CONFIG_EMMC_LINUX_BLOCK) " " __stringify(CONFIG_MAX_LINUX_BLOCK_NUM) ";fi\0"
 #define ENV_BOOT_READ_IMAGE \
     "boot_rd_img=mmc device 0;mmc read ${loadaddr} " __stringify(CONFIG_EMMC_LINUX_BLOCK) " 1" \
     ";image_blks " __stringify(CONFIG_SYS_MAX_FLASH_SECT) \
     ";mmc read ${loadaddr} " __stringify(CONFIG_EMMC_LINUX_BLOCK) " ${img_blks}\0"
 #define ENV_WRITE_UBOOT \
-    "wr_uboot=filesize_check " __stringify(CONFIG_MAX_UBOOT_SIZE*512) \
+    "wr_uboot=filesize_check " __stringify(CONFIG_MAX_UBOOT_SIZE) \
 	";if test ${filesize_result} = good; then mmc device 0;mmc write ${loadaddr} " __stringify(CONFIG_EMMC_UBOOT_BLOCK) \
-    " " __stringify(CONFIG_MAX_UBOOT_SIZE) ";fi\0"
+    " " __stringify(CONFIG_MAX_UBOOT_BLOCK_NUM) ";fi\0"
 #define ENV_WRITE_ATF \
-	"wr_atf=filesize_check " __stringify(CONFIG_MAX_ATF_SIZE*512) \
+	"wr_atf=filesize_check " __stringify(CONFIG_MAX_ATF_SIZE) \
 	";if test ${filesize_result} = good; then mmc device 0;mmc write ${loadaddr} " __stringify(CONFIG_EMMC_ATF_BLOCK) \
-	" " __stringify(CONFIG_MAX_ATF_SIZE) ";fi\0"
+	" " __stringify(CONFIG_MAX_ATF_BLOCK_NUM) ";fi\0"
 #define ENV_WRITE_PRELOADER \
-	"wr_pl=filesize_check " __stringify(CONFIG_MAX_PL_SIZE*512) \
+	"wr_pl=filesize_check " __stringify(CONFIG_MAX_PL_SIZE) \
 	";if test ${filesize_result} = good; then mmc device 0; mmc write ${loadaddr} " __stringify(CONFIG_EMMC_PL_BLOCK) \
-	" " __stringify(CONFIG_MAX_PL_SIZE) " emmc_preloader;fi\0"
+	" " __stringify(CONFIG_MAX_PL_BLOCK_NUM) " emmc_preloader;fi\0"
 #define ENV_WRITE_ROM_HEADER \
-	"wr_rom_hdr=filesize_check " __stringify(CONFIG_MAX_HEADER_SIZE*512) \
+	"wr_rom_hdr=filesize_check " __stringify(CONFIG_MAX_HEADER_SIZE) \
 	";if test ${filesize_result} = good; then mmc device 0;mmc write ${loadaddr} " __stringify(CONFIG_EMMC_HEADER_BLOCK) \
-	" " __stringify(CONFIG_MAX_HEADER_SIZE) ";fi\0"
+	" " __stringify(CONFIG_MAX_HEADER_BLOCK_NUM) ";fi\0"
 #define ENV_WRITE_CTP \
-    "wr_ctp=filesize_check " __stringify(CONFIG_MAX_CTP_SIZE*512) \
+    "wr_ctp=filesize_check " __stringify(CONFIG_MAX_CTP_SIZE) \
 	";if test ${filesize_result} = good; then ctp_check;if test ${ctp_result} = good; then mmc device 0;mmc write ${loadaddr} " __stringify(CONFIG_EMMC_CTP_BLOCK) \
-    " " __stringify(CONFIG_MAX_CTP_SIZE) ";reset; fi;fi\0"
+    " " __stringify(CONFIG_MAX_CTP_BLOCK_NUM) ";reset; fi;fi\0"
 
 #define ENV_BOOT_READ_CTP \
     "boot_rd_ctp=mmc device 0;mmc read ${loadaddr} " __stringify(CONFIG_EMMC_CTP_BLOCK) \
-    " " __stringify(CONFIG_MAX_CTP_SIZE) "\0"
+    " " __stringify(CONFIG_MAX_CTP_BLOCK_NUM) "\0"
 
 #define ENV_WRITE_FLASHIMAGE \
-	"wr_flashimage=filesize_check " __stringify(CONFIG_MAX_FLASHIMAGE_SIZE*512) \
+	"wr_flashimage=filesize_check " __stringify(CONFIG_MAX_FLASHIMAGE_SIZE) \
 	";if test ${filesize_result} = good; then mmc device 0;mmc write ${loadaddr} " __stringify(CONFIG_EMMC_FLASHIMAGE_BLOCK) \
-		" " __stringify(CONFIG_MAX_FLASHIMAGE_SIZE) ";fi\0"
+		" " __stringify(CONFIG_MAX_FLASHIMAGE_BLOCK_NUM) ";fi\0"
 
 #define ENV_WRITE_GPT \
-	"wr_gpt=filesize_check " __stringify(CONFIG_MAX_GPT_SIZE*512) \
+	"wr_gpt=filesize_check " __stringify(CONFIG_MAX_GPT_SIZE) \
 	";if test ${filesize_result} = good; then mmc device 0;mmc write ${loadaddr} " __stringify(CONFIG_EMMC_GPT_BLOCK) \
-		" " __stringify(CONFIG_MAX_GPT_SIZE) ";fi\0"
+		" " __stringify(CONFIG_MAX_GPT_BLOCK_NUM) ";fi\0"
 
 
 #elif defined(OFF_BOARD_SD_CARD_COMPONENT)
@@ -405,18 +419,6 @@
 #define CONFIG_ENV_SIZE                     SZ_4K
 #define CONFIG_ENV_OFFSET                   0x140000
 #define CONFIG_SYS_MMC_ENV_DEV              1
-
-/*BPI*/
-/* NAND Flash Configuration */
-#define CONFIG_SYS_MAX_NAND_DEVICE	        1	
-#define CONFIG_SYS_NAND_BASE                NFI_BASE
-#define CONFIG_SYS_MAX_FLASH_BANKS			1
-#define CONFIG_CMD_NAND
-//#define CONFIG_MTD_DEBUG	/* NOTE(Nelson): add debug logs */
-//#define CONFIG_MTD_DEBUG_VERBOSE  7
-#define CONFIG_CMD_MTDPARTS     1
-#define CONFIG_MTD_PARTITIONS   1
-#define CONFIG_MTD_NAND_VERIFY_WRITE            1
 
 #define ENV_BOOT_FROM_SD  \
     "boot5=mmc init; fatload mmc 0:1 0x84000000 uimage ; bootm\0"
@@ -600,8 +602,7 @@
 
 #define ENV_BOOT_CMD11 \
     "boot11=download_setting gpt;tftpboot ${loadaddr} ${gpt_filename};run wr_gpt\0"
-#define ENV_BOOT_CMD12 \
-    "boot12=mmc init; run boot_normal; bootm\0"
+
 #define ENV_BOOT_CMD \
     ENV_BOOT_WRITE_IMAGE \
     ENV_BOOT_READ_IMAGE \
@@ -624,13 +625,13 @@
     ENV_BOOT_CMD8 \
     ENV_BOOT_CMD9 \
     ENV_BOOT_CMD10 \
-	ENV_BOOT_CMD11 \
-	ENV_BOOT_CMD12
+	ENV_BOOT_CMD11
+
 
 #define ENV_BOOT_MENU \
     "bootmenu_0=1. System Load Linux to SDRAM via TFTP.=run boot0\0" \
     "bootmenu_1=2. System Load Linux Kernel then write to Flash via TFTP.=run boot1\0" \
-    "bootmenu_2=3. Boot Linux from SD.=run boot12\0" \
+    "bootmenu_2=3. Boot system code via Flash.=run boot2\0" \
     "bootmenu_3=4. System Load U-Boot then write to Flash via TFTP.=run boot3\0" \
     "bootmenu_4=5. System Load U-Boot then write to Flash via Serial.=run boot4\0" \
     "bootmenu_5=6. System Load ATF then write to Flash via TFTP.=run boot5\0" \
@@ -640,21 +641,6 @@
 	"bootmenu_9=a. System Load CTP then Boot to CTP (via Flash).=run boot9\0" \
 	"bootmenu_10=b. System Load flashimage then write to Flash via TFTP.=run boot10\0" \
 	"bootmenu_11=c. System Load partition table then write to Flash via TFTP.=run boot11\0" \
-    "bpiver=1\0" \
-    "bpi=bananapi\0" \
-    "board=bpi-r64\0" \
-    "chip=MT7622\0" \
-    "service=linux-4.19\0" \
-    "scriptaddr=0x43000000\0" \
-    "device=mmc\0" \
-    "partition=1:1\0" \
-    "kernel=uImage\0" \
-    "root=/dev/mmcblk0p2\0" \
-    "debug=7\0" \
-    "bootenv=uEnv.txt\0" \
-    "checksd=fatinfo ${device} 1:1\0" \
-    "loadbootenv=fatload ${device} ${partition} ${scriptaddr} ${bpi}/${board}/${service}/${bootenv} || fatload ${device} ${partition} ${scriptaddr} ${bootenv}\0" \
-    "boot_normal=if run checksd; then echo Boot from SD ; setenv partition 1:1; else echo Boot from eMMC ; mmc init 0 ; setenv partition 0:1 ; fi; if run loadbootenv; then echo Loaded environment from ${bootenv}; env import -t ${scriptaddr} ${filesize}; fi; run uenvcmd; fatload mmc 0:1 ${loadaddr} ${bpi}/${board}/${service}/${kernel}; bootm\0" \
     "bootmenu_delay=30\0" \
     ""
 #else
@@ -736,8 +722,8 @@
  *                                       UBoot Command
  **********************************************************************************************/
 /* Shell */
-#define CONFIG_SYS_MAXARGS		            32
-#define CONFIG_SYS_PROMPT		            "BPI-IoT> "
+#define CONFIG_SYS_MAXARGS		            8
+#define CONFIG_SYS_PROMPT		            "MT7622> "
 #define CONFIG_COMMAND_HISTORY
 
 /* Commands */

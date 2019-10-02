@@ -495,6 +495,34 @@ static void adjust_size_for_badblocks(loff_t *size, loff_t offset, int dev)
 	}
 }
 
+int ranand_erase_write(u_char * load_addr,u_char  nand_offset,u_char size)
+{
+	nand_info_t *nand;
+	nand_erase_options_t opts;
+	int dev = nand_curr_device;
+	int ret =0;
+
+	size_t rwsize = size;
+	nand = &nand_info[dev];
+	memset(&opts, 0, sizeof(opts));
+	opts.offset = nand_offset;
+	opts.length = size;
+	opts.jffs2  = 0;
+	opts.quiet  = 0;
+	opts.spread = 1;
+
+	ret = nand_erase_opts(nand, &opts);
+	printf("%s\n", ret ? "NAND ERASE ERROR" : "NAND ERASE  OK");
+	if(ret) return 1;
+
+	//max kernel size is 64M currently
+	ret = nand_write_skip_bad(nand, nand_offset, &rwsize,
+						NULL, 0x4000000,
+						(u_char *)((int)load_addr), 0);
+	printf("%s\n", ret ? "NAND WRITE ERROR" : "NAND WRITE OK");
+	return ret;
+}
+
 static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	int i, ret = 0;

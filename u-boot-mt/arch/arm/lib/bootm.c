@@ -23,8 +23,8 @@
 #include <configs/mt7623_evb.h>
 #elif defined(MT7622_ASIC_BOARD) || defined(MT7622_FPGA_BOARD)
 #include <configs/mt7622_evb.h>
-#elif defined(MT7626_ASIC_BOARD) || defined(MT7626_FPGA_BOARD)
-#include <configs/mt7626_evb.h>
+#elif defined(LEOPARD_ASIC_BOARD) || defined(LEOPARD_FPGA_BOARD)
+#include <config.h>
 #endif
 #include <asm/bootm.h>
 #include <linux/compiler.h>

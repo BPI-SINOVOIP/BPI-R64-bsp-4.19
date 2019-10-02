@@ -1,16 +1,3 @@
-/******************************************************************************
-* partition_mt.c - MT6516 NAND partition managment Driver
- *
-* Copyright 2009-2010 MediaTek Co.,Ltd.
- *
-* DESCRIPTION:
-* 	This file provid the other drivers partition relative functions
- *
-* modification history
-* ----------------------------------------
-* v1.0, 28 Feb 2011, mtk80134 written
-* ----------------------------------------
-******************************************************************************/
 #include <configs/autoconf.h>
 #if !defined (ON_BOARD_NAND_FLASH_COMPONENT)
 #include <linux/slab.h>

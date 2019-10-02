@@ -50,49 +50,48 @@ block_dev_desc_t g_mtk_mmc_block = {
     .log2blksz = 9,
     .if_type = IF_TYPE_MMC,
     .dev = 1,
-    .removable = 1,    
-    .block_read = __mmc_block_read, 
+    .removable = 1,
+    .block_read = __mmc_block_read,
     .block_write = __mmc_block_write,
     .block_erase = 0
 };
 
 
-block_dev_desc_t* mmc_get_dev(int dev) { 
-        if(!is_mtk_init) 
+block_dev_desc_t* mmc_get_dev(int dev) {
+        if(!is_mtk_init)
             return 0;
-        else {         
-            return &g_mtk_mmc_block; 
+        else {
+            return &g_mtk_mmc_block;
         }
 }
 
-int mmc_info_helper(unsigned int *lba, char* vendor, char *product, char *revision);
+int mmc_info_helper(int id, unsigned int *lba, char* vendor, char *product, char *revision);
 int mmc_legacy_init(int id){
 
     int ret = 0, ret2=0;
     int i = 0;
     char buf[512];
 
-    
-    ret = __mmc_init(1);
+    ret = __mmc_init(id);
     is_mtk_init = 1;
 
     /*test for read*/
-    ret2 = mmc_block_read(1, 0, 1, (long unsigned int *)&buf[0]);
+    ret2 = mmc_block_read(id, 0, 1, (long unsigned int *)&buf[0]);
     printf("ret2 = %d\n", ret2);
-    ret2 = mmc_block_read(1, 0, 1, (long unsigned int *)&buf[0]);
+    ret2 = mmc_block_read(id, 0, 1, (long unsigned int *)&buf[0]);
     printf("ret2 = %d\n", ret2);
-    
+
     mmc_info_helper(
-                (unsigned int *)&g_mtk_mmc_block.lba, 
-                 g_mtk_mmc_block.vendor, 
-                 g_mtk_mmc_block.product, 
-                 g_mtk_mmc_block.revision) ; 
+                 g_mtk_mmc_block.dev,
+                 (unsigned int *)&g_mtk_mmc_block.lba,
+                 g_mtk_mmc_block.vendor,
+                 g_mtk_mmc_block.product,
+                 g_mtk_mmc_block.revision);
 
-    
-
+/*
     printf("<= [mmc1 block 0] =>\n");
     for ( i = 0 ; i < 512 ; i+=8) {
-        printf("[0x%08x] %02x %02x %02x %02x %02x %02x %02x %02x\n", 
+        printf("[0x%08x] %02x %02x %02x %02x %02x %02x %02x %02x\n",
             i,
             buf[i],
             buf[i+1],
@@ -102,9 +101,11 @@ int mmc_legacy_init(int id){
             buf[i+5],
             buf[i+6],
             buf[i+7]);
-        }  
-    
+        }
+*/
+
     //printf("lba = %d\n ", g_mtk_mmc_block.lba);
+    g_mtk_mmc_block.dev = id;
     init_part(&g_mtk_mmc_block);
     print_part(&g_mtk_mmc_block);
 

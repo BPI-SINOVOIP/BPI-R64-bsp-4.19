@@ -9,7 +9,6 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 extern int rt2880_eth_initialize(bd_t *bis);
-
 /*
  *  Iverson 20140326 : DRAM have been initialized in preloader.
  */
@@ -17,19 +16,16 @@ extern int rt2880_eth_initialize(bd_t *bis);
 int dram_init(void)
 {
     /*
-     *  Iverson 20140526 : Use static memory declaration.
-     *      UBoot support memory auto detection. 
-     *      However, we still use static declaration becasue we should modify many code if we use auto detection.
+     * UBoot support memory auto detection.
+     * So now support both static declaration and auto detection for DRAM size
      */
-
-    /*
-     * Iverson 20150525 : Reserver 1MB memory of bottom for ATF log.
-     *      It just sync from MT6735m preloader. They will reserve 1MB for ATF log.
-     */
-
-    gd->ram_size = CONFIG_SYS_SDRAM_SIZE - SZ_16M;    
-    //gd->ram_size = CONFIG_SYS_SDRAM_SIZE;
-    //gd->ram_size = get_ram_size((long *)CONFIG_SYS_SDRAM_BASE, CONFIG_SYS_SDRAM_SIZE);
+#if CONFIG_CUSTOMIZE_DRAM_SIZE
+    gd->ram_size = CONFIG_SYS_SDRAM_SIZE - SZ_16M;
+    printf("static declaration g_total_rank_size = 0x%8X\n", (int)gd->ram_size);
+#else
+    gd->ram_size = get_ram_size((long *)CONFIG_SYS_SDRAM_BASE,0x80000000) - SZ_16M;
+    printf("auto detection g_total_rank_size = 0x%8X\n", (int)gd->ram_size);
+#endif
 
 	return 0;
 }

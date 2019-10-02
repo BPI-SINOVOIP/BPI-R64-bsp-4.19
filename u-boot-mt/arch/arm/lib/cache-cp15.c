@@ -112,15 +112,16 @@ static inline void mmu_setup(void)
 	reg = get_cr();	/* get control reg. */
 	cp_delay();
 	/* the original get_cr() and then set_cr(reg | CR_M) can not be useful ,So we just set_cr(Registor_Value) Here;Diff Chip may have diff Registor_Value */
-	#if (defined (MT7622_ASIC_BOARD))||(defined (MT7622_FPGA_BOARD))
+#if (defined (MT7622_ASIC_BOARD))||(defined (MT7622_FPGA_BOARD))
 	set_cr(0x00C01827);/* config the memory type(device,normal) */
-	#elif (defined (MT7626_ASIC_BOARD))||(defined (MT7626_FPGA_BOARD))
+#elif (defined (LEOPARD_ASIC_BOARD))||(defined (LEOPARD_FPGA_BOARD))
 	set_cr(0x00C01827);/* config the memory type(device,normal) */
-	#elif (defined (MT7623_ASIC_BOARD))||(defined (MT7623_FPGA_BOARD))
+	uninitialized_var(reg);
+#elif (defined (MT7623_ASIC_BOARD))||(defined (MT7623_FPGA_BOARD))
 	set_cr(0x00C01827);/* config the memory type(device,normal) */
-	#else
+#else
 	set_cr(reg | CR_M);
-	#endif
+#endif
 }
 
 static int mmu_enabled(void)

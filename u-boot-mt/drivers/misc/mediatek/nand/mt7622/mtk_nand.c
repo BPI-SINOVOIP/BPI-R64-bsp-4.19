@@ -1,16 +1,3 @@
-/******************************************************************************
-* mtk_nand.c - MTK NAND Flash Device Driver
- *
-* Copyright 2009-2012 MediaTek Co.,Ltd.
- *
-* DESCRIPTION:
-* 	This file provid the other drivers nand relative functions
- *
-* modification history
-* ----------------------------------------
-* v3.0, 11 Feb 2010, mtk
-* ----------------------------------------
-******************************************************************************/
 #include <common.h>
 #include <linux/string.h>
 #include <config.h>
@@ -54,7 +41,7 @@ struct mtk_nand_host_hw mtk_nand_hw = {
 	.nand_ecc_mode			= NAND_ECC_HW,
 };
 
-#define xlog_printk	fprintf
+#define xlog_printk		printf
 #define ANDROID_LOG_WARN	stderr
 #define ANDROID_LOG_INFO	stderr
 #define ANDROID_LOG_ERROR	stderr
@@ -3335,13 +3322,16 @@ int mtk_nand_block_markbad_hw(struct mtd_info *mtd, loff_t offset)
     struct nand_chip *chip = mtd->priv;
     int block = (int)offset >> chip->phys_erase_shift;
     int page = block * (1 << (chip->phys_erase_shift - chip->page_shift));
+    int sec_num = 1<<(chip->page_shift-9);
     int ret;
 
-    u8 buf[8];
-    memset(buf, 0xFF, 8);
-    buf[0] = 0;
+    u8 buf[mtd->writesize], FDMbuf[mtd->oobsize];
+    memset(buf, 0xFF, mtd->writesize);
+    memset(FDMbuf, 0xFF, mtd->oobsize);
+    FDMbuf[(sec_num-1)*8] = 0;
 
-    ret = mtk_nand_write_oob_raw(mtd, buf, page, 8);
+    ret = mtk_nand_exec_write_page(mtd, page, mtd->writesize, buf, FDMbuf);
+
     return ret;
 }
 
@@ -3430,19 +3420,16 @@ int mtk_nand_block_bad_hw(struct mtd_info *mtd, loff_t ofs)
     struct nand_chip *chip = (struct nand_chip *)mtd->priv;
     int page_addr = (int)(ofs >> chip->page_shift);
     unsigned int page_per_block = 1 << (chip->phys_erase_shift - chip->page_shift);
+    u8 buf[mtd->writesize], FDMbuf[mtd->oobsize];
+    int sec_num = 1<<(chip->page_shift-9);
 
-    unsigned char oob_buf[8];
     page_addr &= ~(page_per_block - 1);
 
-    if (mtk_nand_read_oob_raw(mtd, oob_buf, page_addr, sizeof(oob_buf)))
-    {
-        printk(KERN_WARNING "mtk_nand_read_oob_raw return error\n");
-        return 1;
-    }
+    mtk_nand_exec_read_page(mtd, page_addr, mtd->writesize, buf, FDMbuf);
 
-    if (oob_buf[0] != 0xff)
+    if (FDMbuf[(sec_num - 1) * 8] != 0xff)
     {
-        printk(KERN_WARNING "Bad block detected at 0x%x, oob_buf[0] is 0x%x\n", page_addr, oob_buf[0]);
+        printk(KERN_WARNING "Bad block detected at 0x%x, Bad index is 0x%x\n", page_addr, FDMbuf[(sec_num - 1) * 8]);
         // dump_nfi();
         return 1;
     }

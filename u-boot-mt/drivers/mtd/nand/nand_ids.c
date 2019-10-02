@@ -84,6 +84,7 @@ const struct nand_flash_dev nand_flash_ids[] = {
 	{"NAND 64MiB 1,8V 16-bit",	0xB0, 0,  64, 0, LP_OPTIONS16},
 	{"NAND 64MiB 3,3V 16-bit",	0xC2, 0,  64, 0, LP_OPTIONS16},
 	{"NAND 64MiB 3,3V 16-bit",	0xC0, 0,  64, 0, LP_OPTIONS16},
+	{"SNAND 64MiB 3,3V 8-bit",	0x01, 0,  64, 0, LP_OPTIONS},
 
 	/* 1 Gigabit */
 	{"NAND 128MiB 1,8V 8-bit",	0xA1, 0, 128, 0, LP_OPTIONS},
@@ -92,6 +93,13 @@ const struct nand_flash_dev nand_flash_ids[] = {
 	{"NAND 128MiB 1,8V 16-bit",	0xB1, 0, 128, 0, LP_OPTIONS16},
 	{"NAND 128MiB 3,3V 16-bit",	0xC1, 0, 128, 0, LP_OPTIONS16},
 	{"NAND 128MiB 1,8V 16-bit",     0xAD, 0, 128, 0, LP_OPTIONS16},
+	{"SNAND 128MiB 3,3V 8-bit",	0x21, 0, 128, 0, LP_OPTIONS},
+	{"SNAND 128MiB 3,3V 8-bit",	0x11, 0, 128, 0, LP_OPTIONS},
+	{"SNAND 128MiB 3,3V 8-bit",	0xC2, 0, 128, 0, LP_OPTIONS},
+	{"SNAND 128MiB 3,3V 8-bit",	0x12, 0, 128, 0, LP_OPTIONS},
+	{"SNAND 128MiB 3,3V 8-bit",	0x14, 0, 128, 0, LP_OPTIONS},
+	{"SNAND 128MiB 3,3V 8-bit",	0xC2, 0, 128, 0, LP_OPTIONS},
+	{"SNAND 128MiB 3,3V 8-bit",	0x1D, 0, 128, 0, LP_OPTIONS},
 
 	/* 2 Gigabit */
 	//{"NAND 256MiB 1,8V 8-bit",	0xAA, 0, 256, 0, LP_OPTIONS},
@@ -100,12 +108,24 @@ const struct nand_flash_dev nand_flash_ids[] = {
 	{"NAND 256MiB 3,3V 8-bit",	0xDA, 0, 256, 0, LP_OPTIONS},
 	{"NAND 256MiB 1,8V 16-bit",	0xBA, 0, 256, 0, LP_OPTIONS16},
 	{"NAND 256MiB 3,3V 16-bit",	0xCA, 0, 256, 0, LP_OPTIONS16},
+	{"SNAND 256MiB 3,3V 8-bit",	0xD2, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 256MiB 3,3V 8-bit",	0x0A, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 256MiB 3,3V 8-bit",	0x12, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 256MiB 3,3V 8-bit",	0xCB, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 256MiB 3,3V 8-bit",	0xAB, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 256MiB 3,3V 8-bit",	0x24, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 256MiB 3,3V 8-bit",	0x10, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 256MiB 3,3V 8-bit",	0x1F, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 256MiB 3,3V 8-bit",	0x1B, 0, 512, 0, LP_OPTIONS},
 
 	/* 4 Gigabit */
 	{"NAND 512MiB 1,8V 8-bit",	0xAC, 0, 512, 0, LP_OPTIONS},
 	{"NAND 512MiB 3,3V 8-bit",	0xDC, 0, 512, 0, LP_OPTIONS},
 	{"NAND 512MiB 1,8V 16-bit",	0xBC, 0, 512, 0, LP_OPTIONS16},
 	{"NAND 512MiB 3,3V 16-bit",	0xCC, 0, 512, 0, LP_OPTIONS16},
+	{"SNAND 512MiB 3,3V 8-bit",	0xD4, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 512MiB 3,3V 8-bit",	0xCD, 0, 512, 0, LP_OPTIONS},
+	{"SNAND 512MiB 3,3V 8-bit",	0x36, 0, 512, 0, LP_OPTIONS},
 
 	/* 8 Gigabit */
 	{"NAND 1GiB 1,8V 8-bit",	0xA3, 0, 1024, 0, LP_OPTIONS},
@@ -180,5 +200,8 @@ const struct nand_manufacturers nand_manuf_ids[] = {
 	{NAND_MFR_AMD, "AMD/Spansion"},
 	{NAND_MFR_MACRONIX, "Macronix"},
 	{NAND_MFR_EON, "Eon"},
+	{NAND_MFR_GD, "GigaDevice"},
+	{NAND_MFR_WINBOND, "Winbond"},
+	{NAND_MFR_ETRON, "Etron"},
 	{0x0, "Unknown"}
 };

@@ -336,7 +336,7 @@ PT_THREAD(psock_readbuf(register struct psock *psock))
         printf("buf_setup load_addr = %x\n", load_addr);
   /* FIXME: buf size should be according to CFG_KERN_SIZE */
   /*To support upto 7MB FW*/
-  buf_setup(&psock->buf, (unsigned char *)load_addr, 0x1000000);
+  buf_setup(&psock->buf, (unsigned char *)load_addr, 0x4000000);
   
   /* XXX: Should add buf_checkmarker() before do{} loop, if
      incoming data has been handled while waiting for a write. */

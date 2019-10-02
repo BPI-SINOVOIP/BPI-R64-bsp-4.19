@@ -2,46 +2,46 @@ mainmenu_name 'Uboot Configuration'
 
 choice 'Chip ID'	 "MT7623 MT7623 \
                     MT7622 MT7622 \
-					MT7626 MT7626
+                    MT7629 MT7629
                    " MT7622
 
 choice 'Chip Type' "FPGA FPGA \
                     ASIC ASIC
                    " ASIC
 
+define_bool MT7622_FPGA_BOARD n
+define_bool MT7623_FPGA_BOARD n
+define_bool MT7629_FPGA_BOARD n
+define_bool LEOPARD_FPGA_BOARD n
+
+define_bool MT7622_ASIC_BOARD n
+define_bool MT7623_ASIC_BOARD n
+define_bool MT7629_ASIC_BOARD n
+define_bool LEOPARD_ASIC_BOARD n
+
 if [ "$MT7623" = "y" ]; then
    if [ "$FPGA" = "y" ]; then
        define_bool MT7623_FPGA_BOARD y
-	   define_bool MT7622_FPGA_BOARD n
-	   define_bool MT7626_FPGA_BOARD n
    else
        define_bool MT7623_ASIC_BOARD y
-	   define_bool MT7622_ASIC_BOARD n
-	   define_bool MT7626_ASIC_BOARD n
    fi
 fi
 
 if [ "$MT7622" = "y" ]; then
    if [ "$FPGA" = "y" ]; then
        define_bool MT7622_FPGA_BOARD y
-	   define_bool MT7623_FPGA_BOARD n
-	   define_bool MT7626_FPGA_BOARD n
    else
        define_bool MT7622_ASIC_BOARD y
-	   define_bool MT7623_ASIC_BOARD n
-	   define_bool MT7626_ASIC_BOARD n
    fi
 fi
 
-if [ "$MT7626" = "y" ]; then
+if [ "$MT7629" = "y" ]; then
    if [ "$FPGA" = "y" ]; then
-       define_bool MT7626_FPGA_BOARD y
-	   define_bool MT7622_FPGA_BOARD n
-	   define_bool MT7623_FPGA_BOARD n
+       define_bool MT7629_FPGA_BOARD y
+       define_bool LEOPARD_FPGA_BOARD y
    else
-       define_bool MT7626_ASIC_BOARD y
-	   define_bool MT7622_ASIC_BOARD n
-	   define_bool MT7623_ASIC_BOARD n
+       define_bool MT7629_ASIC_BOARD y
+       define_bool LEOPARD_ASIC_BOARD y
    fi
 fi
 
@@ -54,9 +54,8 @@ if [ "$MT7623_FPGA_BOARD" = "y" -o "$MT7623_ASIC_BOARD" = "y" ]; then
 # MT7623 FLASH
 #-----------------------
 choice 'Flash Type' "NAND ON_BOARD_NAND_FLASH_COMPONENT \
-                     SPI ON_BOARD_SPI_FLASH_COMPONENT \
                      eMMC ON_BOARD_EMMC_COMPONENT \
-                     SD OFF_BOARD_SD_CARD_COMPONENT 
+                     SD OFF_BOARD_SD_CARD_COMPONENT
 		    " eMMC
 
 if [ "$ON_BOARD_NAND_FLASH_COMPONENT" = "y" ]; then
@@ -66,7 +65,7 @@ fi
 
 #-----------------------
 # MT7623 Ethernet
-#-----------------------			
+#-----------------------
 choice 'Use GE1 or GE2' "GMAC1 CONFIG_USE_GE1  \
 	                 GMAC2 CONFIG_USE_GE2
 			" GMAC1
@@ -76,8 +75,8 @@ choice 'GE1 connected to' "GE_MII_FORCE_100	 GE_MII_FORCE_100 \
 		  	   GE_MII_AN		 GE_MII_AN \
 		           GE_RGMII_FORCE_1000   GE_RGMII_FORCE_1000 \
 		           GE_RGMII_AN		 GE_RGMII_AN \
-			   GE_TRGMII_FORCE_2600  CONFIG_GE1_TRGMII_FORCE_2600
-			  " GE_MII_FORCE_100
+			   GE_TRGMII_FORCE_2600  CONFIG_GE1_TRGMII_FORCE_2600 \
+			  " GE_RGMII_FORCE_1000
 else
 choice 'GE2 connected to' " GE_MII_FORCE_100		GE_MII_FORCE_100 \
 			    GE_RVMII_FORCE_100		GE_RVMII_FORCE_100 \
@@ -86,7 +85,7 @@ choice 'GE2 connected to' " GE_MII_FORCE_100		GE_MII_FORCE_100 \
 			    GE_RGMII_AN			GE_RGMII_AN \
 			    GE_RGMII_INTERNAL_P0_AN	GE_RGMII_INTERNAL_P0_AN \
 			    GE_RGMII_INTERNAL_P4_AN	GE_RGMII_INTERNAL_P4_AN 
-			   " GE_MII_FORCE_100
+			   " GE_RGMII_FORCE_1000
 fi
 
 if [ "$GE_MII_AN" = "y" -a "$CONFIG_USE_GE1" = "y" ]; then
@@ -135,8 +134,7 @@ choice 'Flash Type' "NAND ON_BOARD_NAND_FLASH_COMPONENT \
                      SNAND ON_BOARD_SPI_NAND_FLASH_COMPONENT \
                      SNOR ON_BOARD_SPI_NOR_FLASH_COMPONENT \
                      eMMC ON_BOARD_EMMC_COMPONENT \
-                     SD OFF_BOARD_SD_CARD_COMPONENT \
-					 NONE ON_BOARD_NO_FLASH_COMPONENT
+                     SD OFF_BOARD_SD_CARD_COMPONENT
 		    " SNAND
 
 if [ "$ON_BOARD_NAND_FLASH_COMPONENT" = "y" ]; then
@@ -151,18 +149,8 @@ define_bool CONFIG_MTK_SPI_NAND_SUPPORT y
 fi
 
 #-----------------------
-# MT7622 DDR
-#-----------------------
-choice 'DDR Component' " 512Mb ON_BOARD_512Mb_DRAM_COMPONENT \
-			1024Mb ON_BOARD_1024Mb_DRAM_COMPONENT \
-			2048Mb ON_BOARD_2048Mb_DRAM_COMPONENT \
-			4096Mb ON_BOARD_4096Mb_DRAM_COMPONENT \
-			8192Mb ON_BOARD_8192Mb_DRAM_COMPONENT
-			" 4096Mb
-
-#-----------------------
 # MT7622 Ethernet
-#-----------------------			
+#-----------------------
 choice 'Use GE1 or GE2' "GMAC1 CONFIG_USE_GE1  \
 	                 GMAC2 CONFIG_USE_GE2
 			" GMAC2
@@ -172,10 +160,9 @@ choice 'GE1 connected to' "GE_MII_FORCE_100	 GE_MII_FORCE_100 \
 		  	   GE_MII_AN		 GE_MII_AN \
 		           GE_RGMII_FORCE_1000   GE_RGMII_FORCE_1000 \
 		           GE_RGMII_AN		 GE_RGMII_AN \
-			   GE_TRGMII_FORCE_2600  CONFIG_GE1_TRGMII_FORCE_2600 \
 			   GE_SGMII_FORCE_2500	 CONFIG_GE1_SGMII_FORCE_2500 \
 			   GE_ESW	 	 CONFIG_GE1_ESW
-			  " GE_RGMII_AN
+			  " GE_RGMII_FORCE_1000
 else
 choice 'GE2 connected to' " GE_MII_FORCE_100		GE_MII_FORCE_100 \
 			    GE_RVMII_FORCE_100		GE_RVMII_FORCE_100 \
@@ -218,43 +205,55 @@ if [ "$GE_RGMII_INTERNAL_P4_AN" = "y" -a "$CONFIG_USE_GE2" = "y" ]; then
 fi
 
 if [ "$CONFIG_GE1_SGMII_FORCE_2500" = "y" ]; then
-    define_bool CONFIG_RTL8367 y
+    choice 'Switch connected to' " RTL8367S		CONFIG_RTL8367 \
+				   MT7531		CONFIG_MT7531 \
+				 " MT7531
+fi
+
+comment ""
+tristate "Customize Dram Size" CONFIG_CUSTOMIZE_DRAM_SIZE
+#-----------------------
+# MT7622 DDR
+#-----------------------
+
+if [ "$CONFIG_CUSTOMIZE_DRAM_SIZE" = "y" ]; then
+choice 'DDR Component' " 512Mb ON_BOARD_512Mb_DRAM_COMPONENT \
+			1024Mb ON_BOARD_1024Mb_DRAM_COMPONENT \
+			2048Mb ON_BOARD_2048Mb_DRAM_COMPONENT \
+			4096Mb ON_BOARD_4096Mb_DRAM_COMPONENT \
+			8192Mb ON_BOARD_8192Mb_DRAM_COMPONENT \
+			2GB ON_BOARD_2GB_DRAM_COMPONENT
+			" 4096Mb
 fi
 
 fi
 
 
 #########################################################################################3
-# MT7626
+# MT7629
 #########################################################################################3
-if [ "$MT7626_FPGA_BOARD" = "y" -o "$MT7626_ASIC_BOARD" = "y" ]; then
+if [ "$MT7629_FPGA_BOARD" = "y" -o "$MT7629_ASIC_BOARD" = "y" ]; then
 
 #-----------------------
-# MT7626 FLASH
+# MT7629 FLASH
 #-----------------------
 choice 'Flash Type' "SNAND ON_BOARD_SPI_NAND_FLASH_COMPONENT \
-                     SNOR ON_BOARD_SPI_NOR_FLASH_COMPONENT \
-					 NONE ON_BOARD_NO_FLASH_COMPONENT
-		    " SNAND
+                     SNOR ON_BOARD_SPI_NOR_FLASH_COMPONENT
+		    " SNOR
 
 if [ "$ON_BOARD_SPI_NAND_FLASH_COMPONENT" = "y" ]; then
 define_bool CONFIG_MTK_MTD_NAND y
 define_bool CONFIG_MTK_SLC_NAND_SUPPORT y
 define_bool CONFIG_MTK_SPI_NAND_SUPPORT y
+choice 'Page Size & Spare Area Size' "2K+64 ON_BOARD_2K_64_SNAND_COMPONENT \
+			2K+112~128 ON_BOARD_2K_128_SNAND_COMPONENT \
+			4K+256 ON_BOARD_4K_256_SNAND_COMPONENT
+			" 2K+64
 fi
+endchoice
 
 #-----------------------
-# MT7626 DDR
-#-----------------------
-choice 'DDR Component' " 512Mb ON_BOARD_512Mb_DRAM_COMPONENT \
-			1024Mb ON_BOARD_1024Mb_DRAM_COMPONENT \
-			2048Mb ON_BOARD_2048Mb_DRAM_COMPONENT \
-			4096Mb ON_BOARD_4096Mb_DRAM_COMPONENT \
-			8192Mb ON_BOARD_8192Mb_DRAM_COMPONENT
-			" 4096Mb
-
-#-----------------------
-# MT7626 Ethernet
+# MT7629 Ethernet
 #---------------------
 choice 'Use GE1 or GE2' "GMAC1 CONFIG_USE_GE1  \
 	                 GMAC2 CONFIG_USE_GE2
@@ -265,10 +264,10 @@ choice 'GE1 connected to' "GE_MII_FORCE_100	 GE_MII_FORCE_100 \
 			   GE_MII_AN		 GE_MII_AN \
 		           GE_RGMII_FORCE_1000   GE_RGMII_FORCE_1000 \
 		           GE_RGMII_AN		 GE_RGMII_AN \
-			   GE_TRGMII_FORCE_2600  CONFIG_GE1_TRGMII_FORCE_2600 \
 			   GE_SGMII_FORCE_2500	 CONFIG_GE1_SGMII_FORCE_2500 \
-			   GE_ESW	 	 CONFIG_GE1_ESW
-			  " GE_RGMII_AN
+			   GE_ESW	 	 CONFIG_GE1_ESW \
+			   GE_SGMII_AN	 	 CONFIG_GE1_SGMII_AN
+			  " GE_ESW
 else
 choice 'GE2 connected to' " GE_MII_FORCE_100		GE_MII_FORCE_100 \
 			    GE_RVMII_FORCE_100		GE_RVMII_FORCE_100 \
@@ -276,7 +275,9 @@ choice 'GE2 connected to' " GE_MII_FORCE_100		GE_MII_FORCE_100 \
 			    GE_RGMII_FORCE_1000		GE_RGMII_FORCE_1000 \
 			    GE_RGMII_AN			GE_RGMII_AN \
 			    GE_RGMII_INTERNAL_P0_AN	GE_RGMII_INTERNAL_P0_AN \
-			    GE_RGMII_INTERNAL_P4_AN	GE_RGMII_INTERNAL_P4_AN
+			    GE_RGMII_INTERNAL_P4_AN	GE_RGMII_INTERNAL_P4_AN \
+			    GE_SGMII_AN	 		CONFIG_GE2_SGMII_AN \
+			    GE_SGMII_FORCE_2500	 	CONFIG_GE2_SGMII_FORCE_2500
 			   " GE_RGMII_AN
 fi
 
@@ -288,17 +289,17 @@ if [ "$GE_MII_AN" = "y" -a "$CONFIG_USE_GE2" = "y" ]; then
 fi
 
 if [ "$GE_RGMII_AN" = "y" -a "$CONFIG_USE_GE1" = "y" ]; then
-    if [ "$MT7626_FPGA_BOARD" = "y" ]; then
+    if [ "$MT7629_FPGA_BOARD" = "y" ]; then
         hex "GigaPHY address for Auto Polling" MAC_TO_GIGAPHY_MODE_ADDR 0x5
     else
         hex "GigaPHY address for Auto Polling" MAC_TO_GIGAPHY_MODE_ADDR 0x1e
     fi
 fi
 if [ "$GE_RGMII_AN" = "y" -a "$CONFIG_USE_GE2" = "y" ]; then
-    if [ "$MT7626_FPGA_BOARD" = "y" ]; then
+    if [ "$MT7629_FPGA_BOARD" = "y" ]; then
         hex "GigaPHY address for Auto Polling" MAC_TO_GIGAPHY_MODE_ADDR 0x6
     else
-        hex "GigaPHY address for Auto Polling" MAC_TO_GIGAPHY_MODE_ADDR 0x1f
+        hex "GigaPHY address for Auto Polling" MAC_TO_GIGAPHY_MODE_ADDR 0x0
     fi
 fi
 
@@ -310,18 +311,43 @@ if [ "$GE_RGMII_INTERNAL_P4_AN" = "y" -a "$CONFIG_USE_GE2" = "y" ]; then
     define_hex   MAC_TO_GIGAPHY_MODE_ADDR 0x4
 fi
 
+if [ "$CONFIG_GE1_SGMII_AN" = "y" ]; then
+    hex "GigaPHY address for Auto Polling" MAC_TO_GIGAPHY_MODE_ADDR 0x5
+fi
+
+if [ "$CONFIG_GE2_SGMII_AN" = "y" ]; then
+    hex "GigaPHY address for Auto Polling" MAC_TO_GIGAPHY_MODE_ADDR 0x5
+fi
+
 if [ "$CONFIG_GE1_SGMII_FORCE_2500" = "y" ]; then
-    define_bool CONFIG_RTL8367 y
+    choice 'Switch connected to' " RTL8367S		CONFIG_RTL8367 \
+				   MT7531		CONFIG_MT7531 \
+				 " MT7531
+elif [ "$CONFIG_GE2_SGMII_FORCE_2500" = "y" ]; then
+    define_bool CONFIG_MT7531 y
 fi
 
+comment ""
+tristate "Customize Dram Size" CONFIG_CUSTOMIZE_DRAM_SIZE
+
+#-----------------------
+# MT7629 DDR
+#-----------------------
+if [ "$CONFIG_CUSTOMIZE_DRAM_SIZE" = "y" ]; then
+choice 'DDR Component' " 512Mb ON_BOARD_512Mb_DRAM_COMPONENT \
+			1024Mb ON_BOARD_1024Mb_DRAM_COMPONENT \
+			2048Mb ON_BOARD_2048Mb_DRAM_COMPONENT \
+			4096Mb ON_BOARD_4096Mb_DRAM_COMPONENT \
+			8192Mb ON_BOARD_8192Mb_DRAM_COMPONENT \
+			2GB ON_BOARD_2GB_DRAM_COMPONENT
+			" 1024Mb
+fi
 fi
 
-#choice 'Default Behavior when Kernel Boot up Fail' "None None \
-#			 FW_UPGRADE_BY_USB FW_UPGRADE_BY_USB \
-#			 FW_UPGRADE_BY_SDXC FW_UPGRADE_BY_SDXC \
-#			 FW_UPGRADE_BY_WEBUI FW_UPGRADE_BY_WEBUI \
-#			 DUAL_IMAGE_SUPPORT DUAL_IMAGE_SUPPORT 
-#			"
+
+choice 'Default Behavior when Kernel Boot up Fail' "None None \
+			 FW_UPGRADE_BY_WEBUI FW_UPGRADE_BY_WEBUI
+			"
 
 #Load Kernel Image from a USB Storage Device \
 #Load Kernel Image from a SD card

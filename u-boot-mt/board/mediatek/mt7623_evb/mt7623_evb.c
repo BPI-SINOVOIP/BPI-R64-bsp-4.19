@@ -73,16 +73,7 @@ int board_late_init (void)
 {
     gd->env_valid = 1; //to load environment variable from persistent store
     env_relocate();
-#ifdef CONFIG_CMDLINE_TAG
-    char *commandline;
-
-    /* Nelson: set linux kernel boot arguments */
-    setenv("bootargs", COMMANDLINE_TO_KERNEL);
-    commandline = getenv("bootargs");
-    printf("bootargs = %s\n", commandline);
-
-    return 0;
-#endif
+	return 0;
 }
 
 /*

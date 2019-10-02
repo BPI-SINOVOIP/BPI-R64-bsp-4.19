@@ -1257,6 +1257,10 @@ static int nand_do_read_ops(struct mtd_info *mtd, loff_t from,
 
 	uint8_t *bufpoi, *oob, *buf;
 	unsigned int max_bitflips = 0;
+#if (defined (MT7622_ASIC_BOARD))
+	uint8_t bm; /* Bad Block Marker */
+	uint32_t bm_location = 8 * ((1 << (chip->page_shift - 9)) - 1); /* Bad Block Marker location */
+#endif
 
 	stats = mtd->ecc_stats;
 
@@ -1282,6 +1286,9 @@ static int nand_do_read_ops(struct mtd_info *mtd, loff_t from,
 			bufpoi = aligned ? buf : chip->buffers->databuf;
 #ifdef  CONFIG_MTK_MTD_NAND
 			chip->read_page(mtd, chip, bufpoi, page);
+#if (defined (MT7622_ASIC_BOARD))
+			bm = chip->oob_poi[bm_location];
+#endif
 #else
 			chip->cmdfunc(mtd, NAND_CMD_READ0, 0x00, page);
 #endif
@@ -1291,6 +1298,9 @@ static int nand_do_read_ops(struct mtd_info *mtd, loff_t from,
 			 */
 #ifdef  CONFIG_MTK_MTD_NAND
 			ret = chip->ecc.read_oob(mtd, chip, page);
+#if (defined (MT7622_ASIC_BOARD))
+			chip->oob_poi[bm_location] = bm;
+#endif
 #else
 			int oob_required = oob ? 1 : 0;
 			if (unlikely(ops->mode == MTD_OPS_RAW))
@@ -2389,14 +2399,11 @@ int nand_erase_nand(struct mtd_info *mtd, struct erase_info *instr,
 		  * So do mtk_nand_erase() directly
 		  */
 		/* SLC/MLC NAND also call mtk_nand_erase() directly */
-		if (instr->scrub==false)
-			status = chip->erase(mtd, page & chip->pagemask);
-		else
-#endif
-		{
+		status = chip->erase(mtd, page & chip->pagemask);
+#else
 		chip->erase_cmd(mtd, page & chip->pagemask);
 		status = chip->waitfunc(mtd, chip);
-		}
+#endif
 		/*
 		 * See if operation failed and additional status checks are
 		 * available

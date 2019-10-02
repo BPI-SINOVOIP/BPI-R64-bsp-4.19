@@ -1,16 +1,3 @@
-/******************************************************************************
-* mtk_nand.c - MTK NAND Flash Device Driver
- *
-* Copyright 2009-2012 MediaTek Co.,Ltd.
- *
-* DESCRIPTION:
-* 	This file provid the other drivers nand relative functions
- *
-* modification history
-* ----------------------------------------
-* v3.0, 11 Feb 2010, mtk
-* ----------------------------------------
-******************************************************************************/
 #include <configs/autoconf.h>
 #if !defined (ON_BOARD_NAND_FLASH_COMPONENT)
 #include <linux/slab.h>

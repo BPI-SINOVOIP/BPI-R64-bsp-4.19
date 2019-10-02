@@ -591,4 +591,9 @@ extern u32 g_bmt_sz;
 extern int part_num;
 #endif
 
+#define BBPOOL_RATIO   2
+#define ERR_RTN_SUCCESS   1
+#define ERR_RTN_FAIL      0
+#define ERR_RTN_BCH_FAIL -1
+
 #endif

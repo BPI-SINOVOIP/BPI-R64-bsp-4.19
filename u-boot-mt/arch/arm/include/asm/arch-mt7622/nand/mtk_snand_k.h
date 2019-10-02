@@ -23,6 +23,7 @@ typedef enum {
 #define SNAND_MAX_NFI_RESET_US               (10)         // [By Designer Curtis Tsai] 50T @ 26Mhz (1923 ns) is enough
 
 // Standard Commands
+#define SNAND_CMD_DIE_SELECT                (0xC2)
 #define SNAND_CMD_BLOCK_ERASE               (0xD8)
 #define SNAND_CMD_GET_FEATURES              (0x0F)
 #define SNAND_CMD_FEATURES_BLOCK_LOCK       (0xA0)
@@ -223,6 +224,7 @@ typedef enum {
 //----------------------------------------
 #define SNAND_ADV_READ_SPLIT                (0x00000001)
 #define SNAND_ADV_VENDOR_RESERVED_BLOCKS    (0x00000002)
+#define SNAND_ADV_TWO_DIE                   (0x00000004)
 
 //----------------------------------------
 // Spare Format
