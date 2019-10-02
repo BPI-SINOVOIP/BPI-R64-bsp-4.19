@@ -419,6 +419,17 @@
 #define CONFIG_ENV_SIZE                     SZ_4K
 #define CONFIG_ENV_OFFSET                   0x140000
 #define CONFIG_SYS_MMC_ENV_DEV              1
+/*BPI*/
+/* NAND Flash Configuration */
+#define CONFIG_SYS_MAX_NAND_DEVICE	        1	
+#define CONFIG_SYS_NAND_BASE                NFI_BASE
+#define CONFIG_SYS_MAX_FLASH_BANKS			1
+#define CONFIG_CMD_NAND
+//#define CONFIG_MTD_DEBUG	/* NOTE(Nelson): add debug logs */
+//#define CONFIG_MTD_DEBUG_VERBOSE  7
+#define CONFIG_CMD_MTDPARTS     1
+#define CONFIG_MTD_PARTITIONS   1
+#define CONFIG_MTD_NAND_VERIFY_WRITE            1
 
 #define ENV_BOOT_FROM_SD  \
     "boot5=mmc init; fatload mmc 0:1 0x84000000 uimage ; bootm\0"
@@ -454,6 +465,9 @@
 
 #define CONFIG_SDCARD_FLASHIMAGE_BLOCK      0x0
 #define CONFIG_MAX_FLASHIMAGE_SIZE          0xa000         //0xa000*512 =20M
+/*BPI*/
+#define CONFIG_EMMC_PL_BLOCK                0x0
+#define CONFIG_EMMC_MAX_PL_BLOCK_NUM        0x200
 
 
 #define ENV_BOOT_WRITE_IMAGE \
@@ -472,6 +486,9 @@
 #define ENV_WRITE_PRELOADER \
 	"wr_pl=mmc device 1;mmc write ${loadaddr} " __stringify(CONFIG_SDCARD_PL_BLOCK) \
 	" " __stringify(CONFIG_MAX_PL_SIZE) "\0"
+#define ENV_WRITE_PRELOADER_EMMC \
+	"wr_pl_emmc=mmc init 0 ; mmc device 0; mmc write ${loadaddr} " __stringify(CONFIG_EMMC_PL_BLOCK) \
+	" " __stringify(CONFIG_EMMC_MAX_PL_BLOCK_NUM) " emmc_preloader;\0"
 #define ENV_WRITE_ROM_HEADER \
 	"wr_rom_hdr=mmc device 1;mmc write ${loadaddr} " __stringify(CONFIG_SDCARD_HEADER_BLOCK) \
 	" " __stringify(CONFIG_MAX_HEADER_SIZE) "\0"
@@ -499,6 +516,7 @@
 #define ENV_WRITE_UBOOT "wr_uboot=none\0"
 #define ENV_WRITE_ATF
 #define ENV_WRITE_PRELOADER
+#define ENV_WRITE_PRELOADER_EMMC
 #define ENV_WRITE_ROM_HEADER
 #define ENV_WRITE_CTP
 #define ENV_BOOT_READ_CTP
@@ -514,6 +532,12 @@
 #define CONFIG_FS_FAT
 #define CONFIG_CMD_FAT
 #define CONFIG_MEDIATEK_MMC
+/* BPI */
+#define CONFIG_EFI_PARTITION
+#define CONFIG_CMD_GPT
+#define CONFIG_PARTITION_UUIDS
+#define CONFIG_FS_EXT4
+#define CONFIG_CMD_EXT4
 
 #define CONFIG_DOS_PARTITION
 #endif
@@ -602,6 +626,14 @@
 
 #define ENV_BOOT_CMD11 \
     "boot11=download_setting gpt;tftpboot ${loadaddr} ${gpt_filename};run wr_gpt\0"
+#define ENV_BOOT_CMD12 \
+    "boot12=mmc init 1; run boot_normal; bootm\0"
+
+#define ENV_BOOT_CMD_PL \
+    "boot_pl=download_setting preloader;tftpboot ${loadaddr} ${preloader_filename};run wr_pl_emmc\0"
+
+#define ENV_BOOT_CMD_PL_FAT \
+    "boot_pl_fat=fatload ${device} ${partition} ${loadaddr} ${bpi}/${board}/${service}/preloader_evb7622_64_foremmc.bin;run wr_pl_emmc\0"
 
 #define ENV_BOOT_CMD \
     ENV_BOOT_WRITE_IMAGE \
@@ -609,6 +641,7 @@
     ENV_WRITE_UBOOT \
     ENV_WRITE_ATF \
     ENV_WRITE_PRELOADER \
+    ENV_WRITE_PRELOADER_EMMC \
     ENV_WRITE_ROM_HEADER \
     ENV_WRITE_CTP \
     ENV_BOOT_READ_CTP \
@@ -625,22 +658,39 @@
     ENV_BOOT_CMD8 \
     ENV_BOOT_CMD9 \
     ENV_BOOT_CMD10 \
-	ENV_BOOT_CMD11
-
+	ENV_BOOT_CMD11 \
+	ENV_BOOT_CMD12 \
+	ENV_BOOT_CMD_PL \
+	ENV_BOOT_CMD_PL_FAT
 
 #define ENV_BOOT_MENU \
     "bootmenu_0=1. System Load Linux to SDRAM via TFTP.=run boot0\0" \
     "bootmenu_1=2. System Load Linux Kernel then write to Flash via TFTP.=run boot1\0" \
-    "bootmenu_2=3. Boot system code via Flash.=run boot2\0" \
+    "bootmenu_2=3. Boot Linux from SD.=run boot12\0" \
     "bootmenu_3=4. System Load U-Boot then write to Flash via TFTP.=run boot3\0" \
     "bootmenu_4=5. System Load U-Boot then write to Flash via Serial.=run boot4\0" \
     "bootmenu_5=6. System Load ATF then write to Flash via TFTP.=run boot5\0" \
     "bootmenu_6=7. System Load Preloader then write to Flash via TFTP.=run boot6\0" \
     "bootmenu_7=8. System Load ROM header then write to Flash via TFTP.=run boot7\0" \
-    "bootmenu_8=9. System Load CTP then write to Flash via TFTP.=run boot8\0" \
-	"bootmenu_9=a. System Load CTP then Boot to CTP (via Flash).=run boot9\0" \
+    "bootmenu_8=9. BPI:System Load Preloader then write to eMMC via TFTP.=run boot_pl\0" \
+    "bootmenu_9=a. BPI:System Load Preloader then write to eMMC via fatload.=run boot_pl_fat\0" \
 	"bootmenu_10=b. System Load flashimage then write to Flash via TFTP.=run boot10\0" \
 	"bootmenu_11=c. System Load partition table then write to Flash via TFTP.=run boot11\0" \
+    "bpiver=1\0" \
+    "bpi=bananapi\0" \
+    "board=bpi-r64\0" \
+    "chip=MT7622\0" \
+    "service=linux-4.19\0" \
+    "scriptaddr=0x43000000\0" \
+    "device=mmc\0" \
+    "partition=1:1\0" \
+    "kernel=uImage\0" \
+    "root=/dev/mmcblk0p2\0" \
+    "debug=7\0" \
+    "bootenv=uEnv.txt\0" \
+    "checksd=fatinfo ${device} 1:1\0" \
+    "loadbootenv=fatload ${device} ${partition} ${scriptaddr} ${bpi}/${board}/${service}/${bootenv} || fatload ${device} ${partition} ${scriptaddr} ${bootenv}\0" \
+    "boot_normal=if run checksd; then echo Boot from SD ; setenv partition 1:1; else echo Boot from eMMC ; mmc init 0 ; setenv partition 0:1 ; setenv root /dev/mmcblk1p2 ; fi; if run loadbootenv; then echo Loaded environment from ${bootenv}; env import -t ${scriptaddr} ${filesize}; fi; run uenvcmd; fatload mmc 0:1 ${loadaddr} ${bpi}/${board}/${service}/${kernel}; bootm\0" \
     "bootmenu_delay=30\0" \
     ""
 #else
@@ -722,8 +772,8 @@
  *                                       UBoot Command
  **********************************************************************************************/
 /* Shell */
-#define CONFIG_SYS_MAXARGS		            8
-#define CONFIG_SYS_PROMPT		            "MT7622> "
+#define CONFIG_SYS_MAXARGS		            32
+#define CONFIG_SYS_PROMPT		            "BPI-IoT> "
 #define CONFIG_COMMAND_HISTORY
 
 /* Commands */

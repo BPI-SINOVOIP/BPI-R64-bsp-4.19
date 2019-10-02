@@ -5,10 +5,11 @@
 include chosen_board.mk
 
 SUDO=sudo
-CROSS_COMPILE?=arm-linux-gnueabi-
+#CROSS_COMPILE?=arm-linux-gnueabi-
+CROSS_COMPILE=$(COMPILE_TOOL)/arm-linux-
 AARCH64_CROSS_COMPILE?=aarch64-linux-gnu-
 U_CROSS_COMPILE=$(CROSS_COMPILE)
-K_CROSS_COMPILE=$(CROSS_COMPILE)
+#K_CROSS_COMPILE=$(CROSS_COMPILE)
 K_CROSS_COMPILE=$(AARCH64_CROSS_COMPILE)
 
 OUTPUT_DIR=$(CURDIR)/output
@@ -54,8 +55,8 @@ kernel: $(K_DOT_CONFIG)
 	$(Q)$(MAKE) -C linux-mt ARCH=arm64 CROSS_COMPILE=${K_CROSS_COMPILE} -j$J INSTALL_MOD_PATH=output modules
 	$(Q)$(MAKE) -C linux-mt ARCH=arm64 CROSS_COMPILE=${K_CROSS_COMPILE} -j$J INSTALL_MOD_PATH=output modules_install
 #	$(Q)$(MAKE) -C linux-mt ARCH=arm64 CROSS_COMPILE=${K_CROSS_COMPILE} -j$J headers_install
-	mkdir -p linux-mt/output/lib/modules/4.19.49-BPI-R64-Kernel/extra
-	cp mtk_wifi/mt_wifi_ap/mt_wifi.ko linux-mt/output/lib/modules/4.19.49-BPI-R64-Kernel/extra/
+#	mkdir -p linux-mt/output/lib/modules/4.19.49-BPI-R64-Kernel/extra
+#	cp mtk_wifi/mt_wifi_ap/mt_wifi.ko linux-mt/output/lib/modules/4.19.49-BPI-R64-Kernel/extra/
 
 kernel-clean:
 	$(Q)$(MAKE) -C linux-mt ARCH=arm64 CROSS_COMPILE=${K_CROSS_COMPILE} -j$J distclean

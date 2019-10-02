@@ -15,6 +15,8 @@ BPISOC=mtk
 service=linux-4.19
 
 CUR_DIR=$PWD
+TOOLCHAIN=buildroot-gcc492_arm
+CROSS_COMPILE=$CUR_DIR/toolchains/$TOOLCHAIN/usr/bin
 
 list_boards() {
 	(cd ${BPIPACK}/${BPISOC}/${TARGET_PRODUCT}/configs ; ls -1d BPI* )
@@ -28,6 +30,7 @@ generate_board_mk() {
 	BOARD=$BOARD
 	SOC=$SOC
 	MACH=$MACH
+	COMPILE_TOOL=$CROSS_COMPILE
 	UBOOT_CONFIG=${MACH}_config
 	KERNEL_CONFIG=${MACH}_bpi_defconfig
 	TARGET_PLATFORM=${TARGET_PLATFORM}

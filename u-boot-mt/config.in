@@ -142,11 +142,14 @@ define_bool CONFIG_MTK_MTD_NAND y
 define_bool CONFIG_MTK_SLC_NAND_SUPPORT y
 fi
 
-if [ "$ON_BOARD_SPI_NAND_FLASH_COMPONENT" = "y" ]; then
+#BPI
+define_bool ON_BOARD_NO_FLASH_COMPONENT n
+#BPI
+#if [ "$ON_BOARD_SPI_NAND_FLASH_COMPONENT" = "y" ]; then
 define_bool CONFIG_MTK_MTD_NAND y
 define_bool CONFIG_MTK_SLC_NAND_SUPPORT y
 define_bool CONFIG_MTK_SPI_NAND_SUPPORT y
-fi
+#fi
 
 #-----------------------
 # MT7622 Ethernet
