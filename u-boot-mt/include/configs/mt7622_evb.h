@@ -633,7 +633,7 @@
     "boot_pl=download_setting preloader;tftpboot ${loadaddr} ${preloader_filename};run wr_pl_emmc\0"
 
 #define ENV_BOOT_CMD_PL_FAT \
-    "boot_pl_fat=fatload ${device} ${partition} ${loadaddr} ${bpi}/${board}/${service}/preloader_evb7622_64_foremmc.bin;run wr_pl_emmc\0"
+    "boot_pl_fat=mmc init 1; fatload ${device} ${partition} ${loadaddr} ${bpi}/${board}/${service}/preloader_evb7622_64_foremmc.bin;run wr_pl_emmc\0"
 
 #define ENV_BOOT_CMD \
     ENV_BOOT_WRITE_IMAGE \
