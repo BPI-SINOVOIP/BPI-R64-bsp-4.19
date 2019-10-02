@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=/usr
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: neon
+Description: HTTP/WebDAV client library
+Version: 0.30.0
+Libs.private:  -L/opt/buildroot-gcc492_arm/usr/arm-buildroot-linux-uclibcgnueabi/sysroot/usr//lib -lssl -lcrypto   -lxml2 -L/opt/buildroot-gcc492_arm/usr/arm-buildroot-linux-uclibcgnueabi/sysroot/usr/lib -lz -lm -ldl
+Libs: -L${libdir} -lneon 
+Cflags: -I${includedir}/neon 
